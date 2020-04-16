@@ -9,14 +9,35 @@ from botocore.exceptions import ClientError
 from auroraPrettyParser import parseResults
 from .functions import validateConfig
 
-class Database():
-    def __init__(self, event, config):
+class DatabaseTools():
+    def __init__(self, event, config={}):
         self.event = event
         required = ("database", "databaseArn", "databaseHost", "databaseSecretArn")
         defaults = {"secretsPath": "rds-db-credentials"}
         self.config = validateConfig(required, config, defaults)
+        self.client = boto3.client("rds-data")
 
-    def resolveQuery(self, schema=None):
+    def runQuery(self, sql, **kwargs):
+        schema = None if "schema" not in kwargs else kwargs["schema"]
+        pretty = True if "pretty" not in kwargs else kwargs["pretty"]
+        parameters = [] if "parameters" not in kwargs else kwargs["parameters"]
+        secret = self.config["databaseSecretArn"] if "secret" not in kwargs else kwargs["secret"]
+        database = self.config["database"] if "database" not in kwargs else kwargs["database"]
+        databaseArn = self.config["databaseArn"] if "databaseArn" not in kwargs else kwargs["databaseArn"]
+
+        res = self.client.execute_statement(
+            secretArn=secret,
+            schema=schema,
+            database=database,
+            resourceArn=databaseArn,
+            parameters=parameters,
+            includeResultMetadata=pretty,
+            sql=sql
+        )
+        if pretty: res = parseResults(res)
+        return res
+
+    def resolveAppsyncQuery(self, schema=None):
         """
         Run a query for each item in the event.
 
@@ -28,11 +49,10 @@ class Database():
         """
         try:
             secret = self.getCredentials()
-            c = boto3.client("rds-data")
             if isinstance(self.event, list):
                 res = []
                 for n in range(len(self.event)):
-                    result = c.execute_statement(
+                    result = self.client.execute_statement(
                         secretArn=secret,
                         schema=schema,
                         database=self.config["database"],
@@ -43,7 +63,7 @@ class Database():
                     )
                     res.append(parseResults(result))
             else:
-                res = c.execute_statement(
+                res = self.client.execute_statement(
                     secretArn=secret,
                     schema=schema,
                     database=self.config["database"],
@@ -97,7 +117,6 @@ class Database():
 
     def createDatabaseUser(self):
         try:
-            client = boto3.client('rds-data')
             dbpass = ''.join(random.choice('!@#$%^&*()_-+=1234567890' + letters) for i in range(31))
             email = self.event['user']['email']
             parameters = [
@@ -115,7 +134,7 @@ class Database():
             """
 
             newuser = parseResults(
-                client.execute_statement(
+                self.client.execute_statement(
                     secretArn=self.config["databaseSecretArn"],
                     database=self.config["database"],
                     parameters=parameters,
@@ -133,7 +152,7 @@ class Database():
                 CREATE USER {newuser["id"]} WITH PASSWORD '{dbpass}' IN ROLE {newuser["invitation_data"]["role"]};
             """
 
-            client.execute_statement(
+            self.client.execute_statement(
                 secretArn=self.config["databaseSecretArn"],
                 database=self.config["database"],
                 resourceArn=self.config["databaseArn"],
@@ -175,7 +194,7 @@ class Database():
                 DROP ROLE {newuser["id"]}
             """
             try:
-                client.execute_statement(
+                self.client.execute_statement(
                     secretArn=self.config["databaseSecretArn"],
                     database=self.config["database"],
                     resourceArn=self.config["databaseArn"],

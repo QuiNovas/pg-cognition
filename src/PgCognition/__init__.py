@@ -1,3 +1,3 @@
-from .Database import *
+from .DatabaseTools import *
 from .Cognito import *
 from .functions import *
