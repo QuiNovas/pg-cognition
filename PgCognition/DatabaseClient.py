@@ -10,14 +10,39 @@ from auroraPrettyParser import parseResults
 from .cognition_functions import validateConfig
 
 class DatabaseClient():
+    """
+    :Keyword Arguments:
+        * *event* (``list or dict``) -- event argument to Lambda function
+        * *config* (``dict``) -- configuration options
+            * *database* -- database name
+            * *databaseArn* -- arn of the database
+            * *databaseSecretArn* -- (optional) Arn of the database secret to use. Defaults to caller's secret
+
+    Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.
+    """
     def __init__(self, event=None, config={}):
         self.event = event
-        required = ("database", "databaseArn", "databaseHost", "databaseSecretArn")
-        defaults = {"secretsPath": "rds-db-credentials"}
+        required = ("database", "databaseArn", "databaseSecretArn")
+        defaults = {"secretsPath": "rds-db-credentials", "databaseSecretArn": self._getCredentials(event)}
         self.config = validateConfig(required, config, defaults)
         self.client = boto3.client("rds-data")
 
     def runQuery(self, sql, **kwargs):
+        r"""Run a query against an Aurora Serverless Postgresql database
+
+        :param sql: SQL statement to execute
+        :type sql: str, required
+        :param \**kwargs: See below
+        :type \**kwargs: mixed
+
+        :Keyword Arguments:
+            * *schema* (``str``) -- schema to use. Boto3 does not currently respect this. Use the full path to your table in the query instead
+            * *pretty* (``bool``) -- format the results as a list of dicts, one per row, with the keys as column names, default True
+            * *parameters* (``list``) -- a list of parameters to pass to the query
+            * *secret* (``str``) -- override config["databaseSecretArn"]
+            * *database* (``str``) -- override config["database"]
+            * *databaseArn* (``str``) -- override config["databaseArn"]
+        """
         schema = None if "schema" not in kwargs else kwargs["schema"]
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = [] if "parameters" not in kwargs else kwargs["parameters"]
@@ -38,17 +63,15 @@ class DatabaseClient():
         return res
 
     def resolveAppsyncQuery(self, schema=None):
-        """
-        Run a query for each item in the event.
+        """Run a query for each item in the event.
 
-        Kwargs:
-
-            schema -- String specifying the database schema to use. The default is none. Currently boto3 does not
-                      respect this kwarg in the execute_statement operation. It is suggested to simply use the full
-                      path to your table (SELECT * FROM myschema.mytable) in your resolver
+        :param schema: Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query.
+        :type schema: str or None, optional
+        :returns: list of dicts or list of list of dicts with column names as keys
+        :rtype: list
         """
         try:
-            secret = self.getCredentials()
+            secret = self.config["databaseSecretArn"]
             if isinstance(self.event, list):
                 res = []
                 for n in range(len(self.event)):
@@ -72,24 +95,28 @@ class DatabaseClient():
 
         return res
 
-    def getCredentials(self):
+    def _getCredentials(self, event):
         """
-        Get RDS credentials for the user who called us.
+        Get ARN for the secret containing the RDS credentials for the user who called us.
 
-        Secrets for cognito users are constructed as such:
-            arn:aws:secretsmanager:{self.region}:{self.config["account"]}:{self.secretsPath}/self.config["identity"]["email"]
+        Secrets for cognito users are constructed as:
+            arn:aws:secretsmanager:{region}:{account}:{secretsPath}/{event["identity"]["email"]}
 
         We will return the first credential found in the order of:
             1. If caller is a Cognito user
             2. If caller is matched in roleOverrides
             3. If caller is matched in assumedRoleOverrides
 
+        :param event: event from Lambda
+        :type event: dict or list
+        :returns: The arn of an AWS secret
+        :rtype: str
         """
 
-        if isinstance(self.event, list):
-            identity = self.event[0]["identity"]
+        if isinstance(event, list):
+            identity = event[0]["identity"]
         else:
-            identity = self.event["identity"]
+            identity = event["identity"]
 
         secret = None
         secretBase = f"""arn:aws:secretsmanager:{self.config["region"]}:{self.config["account"]}:{self.config["secretsPath"]}"""

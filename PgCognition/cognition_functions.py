@@ -2,8 +2,20 @@ from json import loads
 from json.decoder import JSONDecodeError
 from os import environ
 
-def validateConfig(required, config, defaults={}):
-    for r in required:
+def validateConfig(requiredOpts, config, defaults={}):
+    """Validate the config has all of the required values. For each required value if the option is not set in the config we will attempt to pull it from the environment before throwing an Exception.
+
+    :param requiredOpts: A list of required parameters
+    :type requiredOpts: list, required
+    :param config: A dictionary of configuration options
+    :type config: dict, required
+    :param defaults: A dictionary of config options and their defaults to use if missing
+    :type defaults: dict, optional
+
+    :returns: Dictionary of configuration options
+    :rtype: dict
+    """
+    for r in requiredOpts:
         if r not in config or config[r] is None:
             if r.upper() in environ:
                 try:
