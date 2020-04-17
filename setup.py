@@ -1,6 +1,5 @@
 import io
-from setuptools import setup
-
+from setuptools import setup, find_packages
 
 setup(
     name='pg-cognition',
@@ -13,8 +12,7 @@ setup(
     include_package_data=True,
     long_description=io.open('README.rst', encoding='utf-8').read(),
     long_description_content_type='text/x-rst',
-    packages=['PgCognition'],
-    package_dir={'PgCognition': 'src/PgCognition'},
+    packages=find_packages(),
     install_requires=[
         "aurora-prettyparser",
         "boto3",
