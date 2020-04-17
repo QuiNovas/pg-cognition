@@ -1,4 +1,4 @@
-from . import validateConfig
+from .cognition_functions import validateConfig
 from .DatabaseClient import DatabaseClient
 
 class Cognito():

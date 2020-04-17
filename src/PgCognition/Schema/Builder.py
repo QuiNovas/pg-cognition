@@ -8,7 +8,7 @@ from . import \
     GROUPS_OF, \
     POLICIES, \
     GRANTS
-from .. import validateConfig
+from ..cognition_functions import validateConfig
 from .. import DatabaseClient
 
 class Builder():

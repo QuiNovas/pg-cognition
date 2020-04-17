@@ -7,7 +7,7 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 from auroraPrettyParser import parseResults
-from . import validateConfig
+from .cognition_functions import validateConfig
 
 class DatabaseClient():
     def __init__(self, event=None, config={}):
