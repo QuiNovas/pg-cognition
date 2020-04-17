@@ -7,10 +7,10 @@ from datetime import datetime
 import boto3
 from botocore.exceptions import ClientError
 from auroraPrettyParser import parseResults
-from .functions import validateConfig
+from . import validateConfig
 
-class DatabaseTools():
-    def __init__(self, event, config={}):
+class DatabaseClient():
+    def __init__(self, event=None, config={}):
         self.event = event
         required = ("database", "databaseArn", "databaseHost", "databaseSecretArn")
         defaults = {"secretsPath": "rds-db-credentials"}
@@ -52,25 +52,19 @@ class DatabaseTools():
             if isinstance(self.event, list):
                 res = []
                 for n in range(len(self.event)):
-                    result = self.client.execute_statement(
-                        secretArn=secret,
+                    result = self.runQuery(
+                        self.event[n]["query"],
                         schema=schema,
-                        database=self.config["database"],
-                        resourceArn=self.config["databaseArn"],
                         parameters=self.event[n]["parameters"],
-                        includeResultMetadata=True,
-                        sql=self.event[n]["query"]
+                        secret=secret
                     )
                     res.append(parseResults(result))
             else:
-                res = self.client.execute_statement(
-                    secretArn=secret,
+                res = self.runQuery(
+                    self.event["query"],
                     schema=schema,
-                    database=self.config["database"],
-                    resourceArn=self.config["databaseArn"],
                     parameters=self.event["parameters"],
-                    includeResultMetadata=True,
-                    sql=self.event["query"]
+                    secret=secret
                 )
                 res = parseResults(res)
         except ClientError as e:
@@ -125,24 +119,14 @@ class DatabaseTools():
             ]
 
             sql = """
-                UPDATE global_data.users
+                UPDATE pg_cognition.users
                 SET
                     status='active',
                     invitation_data=jsonb_set(invitation_data, '{accepted_date}', (:CURRENT_TIME)::JSONB)
                 WHERE email = :EMAIL
                 RETURNING *;
             """
-
-            newuser = parseResults(
-                self.client.execute_statement(
-                    secretArn=self.config["databaseSecretArn"],
-                    database=self.config["database"],
-                    parameters=parameters,
-                    resourceArn=self.config["databaseArn"],
-                    includeResultMetadata=True,
-                    sql=sql
-                )
-            )
+            newuser = self.runQuery(sql, parameters=parameters)
 
             if not newuser:
                 raise Exception(f"""Application user {email} does not exist.""")
@@ -152,12 +136,7 @@ class DatabaseTools():
                 CREATE USER {newuser["id"]} WITH PASSWORD '{dbpass}' IN ROLE {newuser["invitation_data"]["role"]};
             """
 
-            self.client.execute_statement(
-                secretArn=self.config["databaseSecretArn"],
-                database=self.config["database"],
-                resourceArn=self.config["databaseArn"],
-                sql=sql
-            )
+            self.runQuery(sql)
 
             s = boto3.client('secretsmanager')
 
@@ -188,19 +167,14 @@ class DatabaseTools():
             )
 
         except (Exception, ClientError) as e:
-            removeSql = f"""
-                UPDATE global_data.users SET status = 'invited' WHERE id = {newuser["id"]};
-                REVOKE {newuser["invitation_data"]["role"]} FROM {newuser["id"]};
-                DROP ROLE {newuser["id"]}
-            """
             try:
-                self.client.execute_statement(
-                    secretArn=self.config["databaseSecretArn"],
-                    database=self.config["database"],
-                    resourceArn=self.config["databaseArn"],
-                    includeResultMetadata=True,
-                    sql=removeSql
-                )
+                sql = f"""
+                    UPDATE pg_cognition.users SET status = 'invited' WHERE id = {newuser["id"]};
+                    REVOKE {newuser["invitation_data"]["role"]} FROM {newuser["id"]};
+                    DROP ROLE {newuser["id"]}
+                """
+
+                self.runQuery(sql)
             except Exception:
                 pass
             try:
