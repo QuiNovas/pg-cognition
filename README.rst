@@ -1,5 +1,6 @@
 A framework tying Aurora Serverless Postgres together with AWS Cognito and Appsync in a multi-tenant application
 =================================================================================================================
+
 The package includes utilities for creating a database schema with the needed tables for users and tenants, creating Necessary Cognito webooks, and resolving Appsync queries.
 
 ========================
