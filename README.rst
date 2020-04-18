@@ -1,7 +1,10 @@
-# A framework tying Aurora Serverless Postgres together with AWS Cognito and Appsync in a multi-tenant application.
+A framework tying Aurora Serverless Postgres together with AWS Cognito and Appsync in a multi-tenant application
+=================================================================================================================
 The package includes utilities for creating a database schema with the needed tables for users and tenants, creating Necessary Cognito webooks, and resolving Appsync queries.
 
-## Basic Security Concepts
+========================
+# Basic Security Concepts
+
 Authentication in Aurora Serveless is done via AWS secrets that contain database credentials. pg-cognition creates users in the database that map to credentials in AWS Secrets Manager to provide authorization
 on the database layer instead of requiring it in the application layer. This results in a high level of security due to the fact that an exploit in the application layer will not allow a user to access resources
 that they are not granted in the database layer.
