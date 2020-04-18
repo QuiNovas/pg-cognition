@@ -11,6 +11,7 @@ class Cognito():
     :type event: dict or list, optional
     :returns: An instance of Cognito()
     :rtype: PgCognition.Cognito
+
     You can only pass one of config or dbClient. dbClient must be a configured instance of DatabaseClient. If using DatabaseClient then event can be omitted and dbClient.event will be used, otherwise dbClient.event will be replaced with self.event
     """
 
