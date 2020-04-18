@@ -25,6 +25,7 @@ cognition_functions
 ===================
 .. automodule:: PgCognition.cognition_functions
    :members:
+
 Indices and tables
 ==================
 
