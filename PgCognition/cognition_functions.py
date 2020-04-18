@@ -1,6 +1,8 @@
 from json import loads
 from json.decoder import JSONDecodeError
 from os import environ
+import boto3
+from botocore.exceptions import ClientError
 
 def validateConfig(requiredOpts, config, defaults={}):
     """Validate the config has all of the required values. For each required value if the option is not set in the config we will attempt to pull it from the environment before throwing an Exception.
@@ -16,21 +18,33 @@ def validateConfig(requiredOpts, config, defaults={}):
     :rtype: dict
     """
     for r in requiredOpts:
+        if "secretsPath" not in defaults: defaults["secretsPath"] = "rds-db-credentials"
+        if "account" not in defaults: defaults["account"] = getCallerAccount()
         if r not in config or config[r] is None:
+            # Try getting from the defaults first
+            if r in defaults:
+                config[r] = defaults[r]
+            # Prefer env vars over defaults
             if r.upper() in environ:
+                # env vars will always be strings, we will cast them if we can
                 try:
                     config[r] = loads(environ[r.upper()])
                 except (JSONDecodeError, TypeError):
                     config[r] = environ[r.upper()]
             else:
                 raise Exception(f"""Option '{r}' missing in config""")
-    for d in defaults:
-        if d not in config or config[d] is None:
-            if d.upper() in environ:
-                try:
-                    config[d] = loads(environ[d.upper()])
-                except (JSONDecodeError, TypeError):
-                    config[d] = environ[d.upper()]
+
     if "secretsPath" in config:
         config["secretsPath"] = config["secretsPath"].rstrip("/")
     return config
+
+def getCallerAccount():
+    """Gets account number of entity that called the function using sts service
+
+    :returns: Account number
+    :rtype: str
+    """
+    try:
+        return boto3.client('sts').get_caller_identity().get('Account')
+    except ClientError as e:
+        raise Exception(e.response)

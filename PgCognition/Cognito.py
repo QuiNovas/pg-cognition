@@ -1,17 +1,41 @@
-from .cognition_functions import validateConfig
 from .DatabaseClient import DatabaseClient
 
 class Cognito():
-    def __init__(self, event, config):
-        self.event = event
-        required = ("database", "databaseArn", "databaseSecret", "region")
-        self.config = validateConfig(required, config)
-        self.dbClient = DatabaseClient(config=self.config)
+    """Methods useful in building cognito hooks
 
-    def AddClaims(self, extraClaims=[]):
+    :param config: A database configuration suitable to be passed to DatabaseClient()
+    :type config: dict, optional
+    :param dbCLient: An instance of DatabaseClient that will be used for queries
+    :type dbCLient: PgCognition.DatabaseClient, optional
+    :param event: AWS Lambda event
+    :type event: dict or list, optional
+    :returns: An instance of Cognito()
+    :rtype: PgCognition.Cognito
+    You can only pass one of config or dbClient. dbClient must be a configured instance of DatabaseClient. If using DatabaseClient then event can be omitted and dbClient.event will be used, otherwise dbClient.event will be replaced with self.event
+    """
+
+    def __init__(self, event=None, config=None, dbClient=None):
+        if config is not None and dbClient is not None:
+            raise Exception("You must pass only ONE of config or dbClient")
+        if dbClient is not None:
+            if event is not None:
+                dbClient.event = event
+            self.dbClient = dbClient
+            self.event = dbClient.event
+            self.config = dbClient.config
+        else:
+            self.dbClient = DatabaseClient(event=event, config=config)
+            self.event = event
+
+    def AddClaims(self, extraClaims={}):
         """
-        Adds claims to Cognito user and returns the object's event.
-        Intended to be used with Cognito Pre Token Generation hook
+        Adds claims to Cognito user and returns the object's event. Intended to be used with Cognito Pre Token Generation.
+        Default is to add role and tenant.
+
+        :param extraClaims: Extra claims to add to jwt
+        :type extraClaims: dict, optional
+        :returns: self.event updated with claims
+        :rtype: dict
         """
 
         email = self.event["request"]["userAttributes"]["email"]
@@ -44,6 +68,9 @@ class Cognito():
         """
         Returns a bool indicating if a user exists and is active.
         Useful for Cognito Pre Authentication hook
+
+        :returns: bool indicating if user is in active state
+        :rtype: bool
         """
 
         email = self.event['request']['userAttributes']['email']
@@ -71,6 +98,9 @@ class Cognito():
 
         If called by Cognito Pre Signup then we will simply prove that a user has been invited
         before continuing with the signup process.
+
+        :returns: bool indicating if a user has been invited
+        :rtype: bool
         """
 
         email = self.event['request']['userAttributes']['email']

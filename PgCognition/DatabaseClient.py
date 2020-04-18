@@ -12,19 +12,23 @@ from .cognition_functions import validateConfig
 class DatabaseClient():
     """
     :Keyword Arguments:
-        * *event* (``list or dict``) -- event argument to Lambda function
+        * *event* (``list or dict``) -- event argument from Lambda function
         * *config* (``dict``) -- configuration options
             * *database* -- database name
             * *databaseArn* -- arn of the database
             * *databaseSecretArn* -- (optional) Arn of the database secret to use. Defaults to caller's secret
+            * *account* -- (optional) Account number where secrets live. Defaults to account number resolved by cognition_functions.getCallerAccount()
+            * *secretsPath* -- (optional) Path to AWS secrets. Defaults to rds-db-credentials/
+    :returns: An instance of PgCognition.DatabaseClient
+    :rtype: PgCognition.DatabaseClient
 
     Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.
     """
+
     def __init__(self, event=None, config={}):
         self.event = event
-        required = ("database", "databaseArn", "databaseSecretArn")
-        defaults = {"secretsPath": "rds-db-credentials", "databaseSecretArn": self._getCredentials(event)}
-        self.config = validateConfig(required, config, defaults)
+        required = ("database", "databaseArn", "databaseSecretArn", "account")
+        self.config = validateConfig(required, config)
         self.client = boto3.client("rds-data")
 
     def runQuery(self, sql, **kwargs):
@@ -42,13 +46,21 @@ class DatabaseClient():
             * *secret* (``str``) -- override config["databaseSecretArn"]
             * *database* (``str``) -- override config["database"]
             * *databaseArn* (``str``) -- override config["databaseArn"]
+
+        :returns: AWS Aurora rds-data response, optionally formatted with auroraPrettyParser
+        :rtype: list or dict
         """
         schema = None if "schema" not in kwargs else kwargs["schema"]
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = [] if "parameters" not in kwargs else kwargs["parameters"]
-        secret = self.config["databaseSecretArn"] if "secret" not in kwargs else kwargs["secret"]
         database = self.config["database"] if "database" not in kwargs else kwargs["database"]
         databaseArn = self.config["databaseArn"] if "databaseArn" not in kwargs else kwargs["databaseArn"]
+        if "secret" in kwargs:
+            secret = kwargs["secret"]
+        elif "databaseSecretArn" in self.config:
+            secret = self.config["databaseSecretArn"]
+        else:
+            secret = self.getCredentials()
 
         res = self.client.execute_statement(
             secretArn=secret,
@@ -62,16 +74,24 @@ class DatabaseClient():
         if pretty: res = parseResults(res)
         return res
 
-    def resolveAppsyncQuery(self, schema=None):
+    def resolveAppsyncQuery(self, schema=None, secretArn=None):
         """Run a query for each item in the event.
 
         :param schema: Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query.
         :type schema: str or None, optional
+        :param secretArn: Override databaseSecretArn from config
+        :type secretArn: str, optional
         :returns: list of dicts or list of list of dicts with column names as keys
         :rtype: list
         """
         try:
-            secret = self.config["databaseSecretArn"]
+            if secretArn is not None:
+                secret = secretArn
+            elif "databaseSecretArn" in self.config and secretArn is None:
+                secret = self.config["databaseSecretArn"]
+            else:
+                secret = self.getCredentials()
+
             if isinstance(self.event, list):
                 res = []
                 for n in range(len(self.event)):
@@ -95,7 +115,7 @@ class DatabaseClient():
 
         return res
 
-    def _getCredentials(self, event):
+    def getCredentials(self):
         """
         Get ARN for the secret containing the RDS credentials for the user who called us.
 
@@ -113,10 +133,10 @@ class DatabaseClient():
         :rtype: str
         """
 
-        if isinstance(event, list):
-            identity = event[0]["identity"]
+        if isinstance(self.event, list):
+            identity = self.event[0]["identity"]
         else:
-            identity = event["identity"]
+            identity = self.event["identity"]
 
         secret = None
         secretBase = f"""arn:aws:secretsmanager:{self.config["region"]}:{self.config["account"]}:{self.config["secretsPath"]}"""
@@ -137,6 +157,12 @@ class DatabaseClient():
         return secret
 
     def createDatabaseUser(self):
+        """Creates a database user
+
+        :returns: Dictionary container new user's secret and database information
+        :rtype: dict
+        """
+
         try:
             dbpass = ''.join(random.choice('!@#$%^&*()_-+=1234567890' + letters) for i in range(31))
             email = self.event['user']['email']
@@ -192,6 +218,11 @@ class DatabaseClient():
                 Description=f'DB credentials for {email}',
                 SecretString=json.dumps(secretString)
             )
+
+            secretString["email"] = email
+            secretString["secretId"] = f"""{self.config["secretsPath"]}/{email}"""
+
+            return secretString
 
         except (Exception, ClientError) as e:
             try:
