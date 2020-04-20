@@ -1,19 +1,12 @@
-
-A framework tying Aurora Serverless Postgres together with AWS Cognito and Appsync in a multi-tenant application
-=================================================================================================================
-
+# A framework tying Aurora Serverless Postgres together with AWS Cognito and Appsync in a multi-tenant application.
 The package includes utilities for creating a database schema with the needed tables for users and tenants, creating Necessary Cognito webooks, and resolving Appsync queries.
 
-Basic Security Concepts
-------------------------
-
+## Athentication
 Authentication in Aurora Serveless is done via AWS secrets that contain database credentials. pg-cognition creates users in the database that map to credentials in AWS Secrets Manager to provide authorization
 on the database layer instead of requiring it in the application layer. This results in a high level of security due to the fact that an exploit in the application layer will not allow a user to access resources
 that they are not granted in the database layer.
 
-Database roles
----------------
-
+## Database roles
 The basis of authorization is achieved through a scaffolding of database roles and Row Level Security Policies. The following roles dictate what users can do in the users and tenants table in the pg-cognition schema,
 which controls authorization.
 
@@ -21,8 +14,7 @@ which controls authorization.
   + **tenant_admins** - Can modify any attribute of a user (except their database username) that belongs to their tenant and change their tenant’s display name
   + **tenant_users** - Can modify their own basic info
 
-Tenants and schemas
--------------------
+## Tenants and schemas
 pg-cognition creates a multi-tenant system by segregating tenants into their own schemas. This creates a layer of isolation in data without having to create RLS policies for any piece of data that you want secregated.
 You can of course create a single tenant and assign all users to that tenant if you wish for your application to behave differently. Users are “locked into” their tenants’s schema through role inheritance.
 
@@ -41,9 +33,7 @@ These roles inherit the tenant_admins and tenant_users roles (respectively). Fin
 + Modifying Grants to the tenant_admins/tenant_users roles, which will grant these permissions to the users/admins of all tenants
 + Applying RLS to a specific schema
 
-Appsync
--------
-
+## Appsync
 This package includes utilities for creating a Lambda function that can function as an Appsync datasource. This works by grabbing the Cognito identity or IAM arn of the entitiy
 who made the call to appsync and then performing the query using their db credentials. Using this datasource makes creating resolvers simple. By default we handle single or batch
 invocations, returning the data in the format that Appsync expects from our method. Resolvers simply define a query and a list of parameters that will be passed to the call to Aurora.
@@ -56,9 +46,7 @@ Features:
   + Additional overrides allow IAM roles and IAM Assumed roles to be mapped to specific database credentials
   + Results are automatically formatted into a list of dictionaries with the column names as keys (or a list of lists in the case of a batch invoke) using aurora-prettyparser package
 
-Cognito
--------
-
+## Cognito
 Integration with Cognito is what glues the application layer to the database authorization layer. This starts with implementing Cognito hooks that tie users in the database users table to a cognito user.
 Standard user creation workflow:
 
@@ -71,7 +59,7 @@ Standard user creation workflow:
     - Create the secret for that database user in Secrets Manager
     - Grant the tenant user/admin role to the new user
 
-**Hooks for login:**
+### Hooks for login
 When a user attempts to log into the application we can reject them with a PreAuthentication hook if they do not exist in the application or are not in the “active” status. This allows us to to suspend users
 by simply changing their user status in the database. This also blocks attemps to guess/brute force Cognito credentials since the username would not only have to exist in Cognito, but also be active in the application.
 Once a user is successfully logged in we can add claims to their JWT to be used in the application using the Cognito module in the PreTokenGeneration hook.
