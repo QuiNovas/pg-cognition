@@ -10,8 +10,8 @@ setup(
     url='https://github.com/QuiNovas/pg-cognition',
     license='Apache 2.0',
     include_package_data=True,
-    long_description=io.open('README.rst', encoding='utf-8').read(),
-    long_description_content_type='text/x-rst',
+    long_description=io.open('README.md', encoding='utf-8').read(),
+    long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=[
         "aurora-prettyparser",
