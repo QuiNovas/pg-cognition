@@ -18,12 +18,7 @@ def validateConfig(requiredOpts, config, defaults={}):
     :rtype: dict
     """
     for r in requiredOpts:
-        if "secretsPath" not in defaults: defaults["secretsPath"] = "rds-db-credentials"
-        if "account" not in defaults: defaults["account"] = getCallerAccount()
         if r not in config or config[r] is None:
-            # Try getting from the defaults first
-            if r in defaults:
-                config[r] = defaults[r]
             # Prefer env vars over defaults
             if r.upper() in environ:
                 # env vars will always be strings, we will cast them if we can
@@ -31,6 +26,9 @@ def validateConfig(requiredOpts, config, defaults={}):
                     config[r] = loads(environ[r.upper()])
                 except (JSONDecodeError, TypeError):
                     config[r] = environ[r.upper()]
+            # Try getting from the defaults
+            elif r in defaults:
+                config[r] = defaults[r]
             else:
                 raise Exception(f"""Option '{r}' missing in config""")
 
