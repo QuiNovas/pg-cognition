@@ -17,7 +17,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'pg-cognition'
+project = 'PgCognition'
 copyright = '2020, Mathew Moon'
 author = 'Mathew Moon'
 
