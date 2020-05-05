@@ -1,6 +1,10 @@
-div.body{
+@import url("classic.css");
+
+div.body {
   min-width: 90% !important;
-  margin-right: 5% !important;
-  margin-left: 3% !important;
-  max-width: 90% !important;
+}
+
+dl.method {
+  border-top: 1px solid black !important;
+  padding-top: 20px;
 }

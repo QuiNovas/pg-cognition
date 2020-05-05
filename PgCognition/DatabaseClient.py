@@ -6,13 +6,10 @@ import random
 from datetime import datetime
 import boto3
 import psycopg2
+from psycopg2.extras import DictCursor
 from botocore.exceptions import ClientError
 from auroraPrettyParser import parseResults
 from .cognition_functions import validateConfig, getCallerAccount
-from psycopg2.extras import DictCursor
-
-# TODO: break messes up getting credentials?????
-# schema kwarg cannot be none
 
 class DatabaseClient():
     """
@@ -30,7 +27,7 @@ class DatabaseClient():
     :returns: An instance of PgCognition.DatabaseClient
     :rtype: PgCognition.DatabaseClient
 
-    Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.
+    :Environment: Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.
     """
 
     def __init__(self, event=None, config={}, client_type="instance"):
