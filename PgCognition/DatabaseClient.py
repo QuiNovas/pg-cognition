@@ -87,10 +87,13 @@ class DatabaseClient():
             * *pretty* (``bool``) -- format the results as a list of dicts, one per row, with the keys as column names, default True
             * *parameters* (``list``) -- a list of parameters to pass to the query in psycopg2's format
             * *switch_role* (``string``) -- Run "SET ROLE <switch_role>" before executing the query to escalate/deescalate privileges
+            * *commit* (``bool``) -- Commit directly after query
         """
+        commit = False if "commit" not in kwargs else kwargs["commit"]
+        assert commit in (True, False), "commit kwarg must be a boolean"
 
         if "switch_role" in kwargs and kwargs["switch_role"] is not None:
-            sql = f"""SELECT cognition.switch_role('{kwargs["switch_role"]}'); {sql}"""
+            sql = f"""SET ROLE {kwargs["switch_role"]}; {sql}"""
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = {} if "parameters" not in kwargs else kwargs["parameters"]
         cursor_type = DictCursor if pretty else None
@@ -99,6 +102,7 @@ class DatabaseClient():
             sql,
             parameters
         )
+        if commit: self.client.commit()
         if pretty: r = [dict(x) for x in c.fetchall()]
         else: r = [list(x) for x in c.fetchall()]
         return r
@@ -273,15 +277,14 @@ class DatabaseClient():
             raise Exception("Could not determine secret ARN through cognito claims or IAM overrides")
         return secret
 
-    def createDatabaseUser(self, login=False):
+    def createDatabaseUser(self, login=False, email=None):
         """Creates a database user
 
         :returns: Dictionary container new user's secret and database information
         :rtype: dict
         """
         dbpass = ''.join(random.choice('!@#$%^&*()_-+=1234567890' + letters) for i in range(31))
-        email = self.event['user']['email']
-
+        email = email if email is not None else self.event["user"]["email"]
         try:
             if self.client_type == "serverless":
                 parameters = [
@@ -370,20 +373,8 @@ class DatabaseClient():
             while s.describe_secret(SecretId=f'{self.config["secretsPath"]}/{user}'):
                 sleep(5)
 
-    def createSecret(self, userid, email, dbpass):
+    def createSecret(self, userid, email, dbpass, upsert=True):
         s = boto3.client('secretsmanager')
-
-        try:
-            # Delete the credentials if they already exist
-            s.delete_secret(
-                SecretId=f'{self.config["secretsPath"]}/{email}',
-                ForceDeleteWithoutRecovery=True
-            )
-            while s.describe_secret(SecretId=f'{self.config["secretsPath"]}/{email}'):
-                sleep(5)
-        except Exception:
-            pass
-
         secretString = {
             "dbClusterIdentifier": self.config["databaseArn"],
             "engine": "postgres",
@@ -394,6 +385,8 @@ class DatabaseClient():
         }
 
         if s.describe_secret(SecretId=f'{self.config["secretsPath"]}/{email}'):
+            if not upsert:
+                raise Exception(f"""Secret {self.config["secretsPath"]}/{email} already exists. Use upsert=True to update or delete first""")
             arn = s.update_secret(
                 SecretId=f'{self.config["secretsPath"]}/{email}',
                 Description=f'DB credentials for {email}',
