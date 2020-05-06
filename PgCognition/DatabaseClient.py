@@ -14,6 +14,7 @@ from .cognition_functions import validateConfig, getCallerAccount
 class DatabaseClient():
     """
     :Keyword Arguments:
+        * *client_type* -- (``str``) -- "serverless" for Aurora Serverless, otherwise "instance". Defaults to "instance"
         * *event* (``list or dict``) -- event argument from Lambda function
         * *config* (``dict``) -- configuration options
             * *region* -- (``str``, optional) aws region. Defaults to us-east-1
@@ -28,6 +29,39 @@ class DatabaseClient():
     :rtype: PgCognition.DatabaseClient
 
     :Environment: Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.
+
+    *Example with a standard Postgres database*
+
+    ..  code-block:: python
+
+        from PgCognition import DatabaseClient
+
+        config = {
+            "dbname": "mydb",
+            "user": "myuser",
+            "host": "localhost",
+            "password": "password"
+        }
+        c = DatabaseClient(config=config, client_type="instance")
+        res = c.runQuery("SELECT * FROM mytable", switch_role="less_privileged_role")
+
+    *Example with a Aurora Serverless*
+
+    ..  code-block:: python
+
+        from PgCognition import DatabaseClient
+
+        config = {
+            "database": "mydb",
+            "account": 12345678,
+            "databaseArn": "arn:aws:rds:us-east-1:123456789:db:mydb",
+            "assumedRoleOverrides": {"administrator": "root-secret", "developer": "root-secret"},
+            "region": "us-east-1",
+            "secretsPath": "rds-db-credentials"
+        }
+        dbClient = DatabaseClient(event=event, config=config)
+        return dbClient.resolveAppsyncQuery()
+        res = c.runQuery("SELECT * FROM mytable", switch_role="less_privileged_role")
     """
 
     def __init__(self, event=None, config={}, client_type="instance"):
@@ -70,16 +104,28 @@ class DatabaseClient():
         """Run an SQL query HELLO
 
         This method is a convenience wrapper for runInstanceQuery and runServerlessQuery
-        The method called whose return value is returned from this method and whose
-        arguments should be passed will depend on self.client_type
-        See above mentioned methods for documentation
+        The method called whose return value is returned from this method and whose arguments
+        should be passed will depend on self.client_type
+
+        See PgCognition.DatabaseClient.runInstanceQuery and PgCognition.DatabaseClient.runServerlessQuery for arguments
 
         :returns: List or Dictionary of query results
         :rtype: list or dict
 
-        :Example:
-        .. code-block:: python
-            client.runQuery("SELECT * FROM foo", switch_role="somerole")
+        *Example with a standard Postgres database*
+
+        ..  code-block:: python
+
+            from PgCognition import DatabaseClient
+
+            config = {
+                "dbname": "mydb",
+                "user": "myuser",
+                "host": "localhost",
+                "password": "password"
+            }
+            c = DatabaseClient(config=config, client_type="instance")
+            res = c.runQuery("SELECT * FROM mytable", switch_role="less_privileged_role")
         """
 
         if isinstance(self.client, psycopg2.extensions.connection):
