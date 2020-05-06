@@ -1,18 +1,18 @@
 
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
     <title>PgCognition documentation &#8212; PgCognition  documentation</title>
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script src="_static/jquery.js"></script>
-    <script src="_static/underscore.js"></script>
-    <script src="_static/doctools.js"></script>
-    <script src="_static/language_data.js"></script>
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -42,12 +42,13 @@
 </div>
 <div class="section" id="databaseclient">
 <h1>DatabaseClient<a class="headerlink" href="#databaseclient" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="PgCognition.DatabaseClient">
-<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">DatabaseClient</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">client_type</span><span class="o">=</span><span class="default_value">'instance'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">DatabaseClient</code><span class="sig-paren">(</span><em class="sig-param">event=None</em>, <em class="sig-param">config={}</em>, <em class="sig-param">client_type='instance'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
+<li><p><em>client_type</em> – (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – “serverless” for Aurora Serverless, otherwise “instance”. Defaults to “instance”</p></li>
 <li><p><em>event</em> (<code class="docutils literal notranslate"><span class="pre">list</span> <span class="pre">or</span> <span class="pre">dict</span></code>) – event argument from Lambda function</p></li>
 <li><dl class="simple">
 <dt><em>config</em> (<code class="docutils literal notranslate"><span class="pre">dict</span></code>) – configuration options</dt><dd><ul>
@@ -75,21 +76,112 @@
 <dd class="field-even"><p>Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.</p>
 </dd>
 </dl>
-<dl class="py method">
-<dt id="PgCognition.DatabaseClient.createDatabaseUser">
-<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">login</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">email</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a database user</p>
+<p><em>Example with a standard Postgres database</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">runQuery</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mytable&quot;</span><span class="p">,</span> <span class="n">switch_role</span><span class="o">=</span><span class="s2">&quot;less_privileged_role&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><em>Example with a Aurora Serverless</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;account&quot;</span><span class="p">:</span> <span class="mi">12345678</span><span class="p">,</span>
+    <span class="s2">&quot;databaseArn&quot;</span><span class="p">:</span> <span class="s2">&quot;arn:aws:rds:us-east-1:123456789:db:mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;assumedRoleOverrides&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;administrator&quot;</span><span class="p">:</span> <span class="s2">&quot;root-secret&quot;</span><span class="p">,</span> <span class="s2">&quot;developer&quot;</span><span class="p">:</span> <span class="s2">&quot;root-secret&quot;</span><span class="p">},</span>
+    <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;secretsPath&quot;</span><span class="p">:</span> <span class="s2">&quot;rds-db-credentials&quot;</span>
+<span class="p">}</span>
+<span class="n">dbClient</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">dbClient</span><span class="o">.</span><span class="n">resolveAppsyncQuery</span><span class="p">()</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">runQuery</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mytable&quot;</span><span class="p">,</span> <span class="n">switch_role</span><span class="o">=</span><span class="s2">&quot;less_privileged_role&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the database connection for client_type of “instance”</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Dictionary container new user’s secret and database information</p>
+<dt class="field-odd">Note</dt>
+<dd class="field-odd"><p>This will throw an AttributeError if client_type is not “instance”</p>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>dict</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.createDatabaseUser">
+<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param">login=False</em>, <em class="sig-param">email=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a database user, optionally from the email address found in the Lambda event</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>login</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – Whether or not this will be a login user</p></li>
+<li><p><em>email</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override the email address from self.event[“user”][“email”]</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Dictionary containing new user’s database credentials and corresponding user from cognition.users table</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+<dt class="field-even">Note</dt>
+<dd class="field-even"><p>If login=True then a random password will be generated and the user granted LOGIN privileges, if False then this will</p>
+</dd>
+</dl>
+<p>be a role that can only be used to switch to after login. EG: using switch_role option to PgCognition.DatabaseClient.runInstanceQuery()</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.createSecret">
+<code class="sig-name descname">createSecret</code><span class="sig-paren">(</span><em class="sig-param">userid</em>, <em class="sig-param">email</em>, <em class="sig-param">dbpass</em>, <em class="sig-param">upsert=True</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createSecret" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates an AWS Secret to use for database credentials</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>userid</strong> (<em>str</em>) – The database username to put in the secret</p></li>
+<li><p><strong>email</strong> (<em>str</em>) – The cognito email address for the database user</p></li>
+<li><p><strong>dbpass</strong> (<em>str</em>) – Database password to store</p></li>
+</ul>
+</dd>
+<dt class="field-even">Keyword Arguments</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><em>upsert</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – If True (default) then update the secret if a secret for this email address. Other wise an Exception will be raised.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.deleteSecret">
+<code class="sig-name descname">deleteSecret</code><span class="sig-paren">(</span><em class="sig-param">user</em>, <em class="sig-param">wait=True</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.deleteSecret" title="Permalink to this definition">¶</a></dt>
+<dd><p>Deletes an AWS Secret
+:param user:  Email address of the user to remove the secret for
+:type user: str</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>wait</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – Block until delete is complete</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="PgCognition.DatabaseClient.getCredentials">
 <code class="sig-name descname">getCredentials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.getCredentials" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ARN for the secret containing the RDS credentials for the user who called us.</p>
@@ -104,61 +196,47 @@
 </dd>
 </dl>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>event</strong> (<em>dict</em><em> or </em><em>list</em>) – event from Lambda</p>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>The arn of an AWS secret</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>str</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt id="PgCognition.DatabaseClient.resolveAppsyncQuery">
-<code class="sig-name descname">resolveAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">schema</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">secretArn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">client_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_role</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveAppsyncQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a query for each item in event</p>
-<p>This is a wrapper for self.resolveInstanceAppsyncQuery and resolveServerlessAppsyncQuery.
-The method this will return depends on self.client_type. See the above mentioned
-methods for documentation.</p>
-<dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>Dictionary or list of query results</p>
+<dd class="field-odd"><p>The arn of an AWS secret</p>
 </dd>
 <dt class="field-even">Return type</dt>
-<dd class="field-even"><p>dict or list</p>
+<dd class="field-even"><p>str</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="PgCognition.DatabaseClient.resolveInstanceAppsyncQuery">
-<code class="sig-name descname">resolveInstanceAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">switch_role</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveInstanceAppsyncQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a query for each item in the event.</p>
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.resolveAppsyncQuery">
+<code class="sig-name descname">resolveAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">schema=''</em>, <em class="sig-param">secretArn=None</em>, <em class="sig-param">client_type=None</em>, <em class="sig-param">switch_role=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveAppsyncQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a query for each item in event</p>
+<p>This is a wrapper for DatabaseClient.resolveInstanceAppsyncQuery and DatabaseClient.resolveServerlessAppsyncQuery and
+will return the result of one of these two methods, depending on whether client_type is “serverless” or “instance”.
+See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.DatabaseClient.resolveServerlessAppsyncQuery</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>switch_role</strong> (<em>str</em><em>, </em><em>optional</em>) – Run “SET ROLE &lt;switch_role&gt;” before executing the query to escalate/deescalate privileges</p>
+<dt class="field-odd">Keyword Arguments</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Schema name. Boto3 rds-client doesn’t acually honor this right not. It is best to use the full path to your table in your query. Only used if client_type = “serverless”</p></li>
+<li><p><a href="#id1"><span class="problematic" id="id2">*</span></a>secretArn (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config. Only used if client_type = “serverless”</p></li>
+<li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Excute query as specific user. The current connection must use a user with permission to assume this role. Only used if client_type = “instance”</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list of dicts or list of list of dicts with column names as keys</p>
+<dd class="field-even"><p>Query results from PgCognition.DatabaseClient.resolveInstanceAppsyncQuery or PgCognition.DatabaseClient.resolveServerlessAppsyncQuery</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list</p>
+<dd class="field-odd"><p>dict or list</p>
 </dd>
 </dl>
 </dd></dl>
 
-<dl class="py method">
-<dt id="PgCognition.DatabaseClient.resolveServerlessAppsyncQuery">
-<code class="sig-name descname">resolveServerlessAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">schema</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">secretArn</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveServerlessAppsyncQuery" title="Permalink to this definition">¶</a></dt>
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.resolveInstanceAppsyncQuery">
+<code class="sig-name descname">resolveInstanceAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">switch_role=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveInstanceAppsyncQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query for each item in the event.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>schema</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Schema name. Boto3 rds-client doesn’t acually honor this right not. It is best to use the full path to your table in your query.</p></li>
-<li><p><strong>secretArn</strong> (<em>str</em><em>, </em><em>optional</em>) – Override databaseSecretArn from config</p></li>
+<li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Excute query as specific user. The current connection must use a user with permission to assume this role</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -170,16 +248,33 @@ methods for documentation.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.resolveServerlessAppsyncQuery">
+<code class="sig-name descname">resolveServerlessAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">schema=''</em>, <em class="sig-param">secretArn=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveServerlessAppsyncQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run a query for each item in the event.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Keyword Arguments</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Schema name. Boto3 rds-client doesn’t acually honor this right not. It is best to use the full path to your table in your query.</p></li>
+<li><p><a href="#id3"><span class="problematic" id="id4">*</span></a>secretArn (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>list of dicts or list of list of dicts with column names as keys</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
 <dt id="PgCognition.DatabaseClient.runInstanceQuery">
-<code class="sig-name descname">runInstanceQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sql</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runInstanceQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">runInstanceQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runInstanceQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query against an Postgresql database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sql</strong> (<em>str</em><em>, </em><em>required</em>) – SQL statement to execute</p></li>
-<li><p><strong>**kwargs</strong> (<em>mixed</em>) – See below</p></li>
-</ul>
+<dd class="field-odd"><p><strong>sql</strong> (<em>str</em><em>, </em><em>required</em>) – SQL statement to execute</p>
 </dd>
 <dt class="field-even">Keyword Arguments</dt>
 <dd class="field-even"><ul class="simple">
@@ -192,14 +287,14 @@ methods for documentation.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="PgCognition.DatabaseClient.runQuery">
-<code class="sig-name descname">runQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sql</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run an SQL query</p>
+<code class="sig-name descname">runQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runQuery" title="Permalink to this definition">¶</a></dt>
+<dd><p>Run an SQL query HELLO</p>
 <p>This method is a convenience wrapper for runInstanceQuery and runServerlessQuery
-The method called whose return value is returned from this method and whose
-arguments should be passed will depend on self.client_type
-See above mentioned methods for documentation</p>
+The method called whose return value is returned from this method and whose arguments
+should be passed will depend on self.client_type</p>
+<p>See PgCognition.DatabaseClient.runInstanceQuery and PgCognition.DatabaseClient.runServerlessQuery for arguments</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
 <dd class="field-odd"><p>List or Dictionary of query results</p>
@@ -208,18 +303,28 @@ See above mentioned methods for documentation</p>
 <dd class="field-even"><p>list or dict</p>
 </dd>
 </dl>
+<p><em>Example with a standard Postgres database</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">runQuery</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mytable&quot;</span><span class="p">,</span> <span class="n">switch_role</span><span class="o">=</span><span class="s2">&quot;less_privileged_role&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="PgCognition.DatabaseClient.runServerlessQuery">
-<code class="sig-name descname">runServerlessQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sql</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runServerlessQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">runServerlessQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runServerlessQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query against an Aurora Serverless Postgresql database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>sql</strong> (<em>str</em><em>, </em><em>required</em>) – SQL statement to execute</p></li>
-<li><p><strong>**kwargs</strong> (<em>mixed</em>) – See below</p></li>
-</ul>
+<dd class="field-odd"><p><strong>sql</strong> (<em>str</em><em>, </em><em>required</em>) – SQL statement to execute</p>
 </dd>
 <dt class="field-even">Keyword Arguments</dt>
 <dd class="field-even"><ul class="simple">
@@ -245,9 +350,9 @@ See above mentioned methods for documentation</p>
 </div>
 <div class="section" id="cognito">
 <h1>Cognito<a class="headerlink" href="#cognito" title="Permalink to this headline">¶</a></h1>
-<dl class="py class">
+<dl class="class">
 <dt id="PgCognition.Cognito">
-<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">Cognito</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dbClient</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">client_type</span><span class="o">=</span><span class="default_value">'instance'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">Cognito</code><span class="sig-paren">(</span><em class="sig-param">event=None</em>, <em class="sig-param">config=None</em>, <em class="sig-param">dbClient=None</em>, <em class="sig-param">client_type='instance'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito" title="Permalink to this definition">¶</a></dt>
 <dd><p>Methods useful in building cognito hooks</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -265,9 +370,9 @@ See above mentioned methods for documentation</p>
 </dd>
 </dl>
 <p>You can only pass one of config or dbClient. dbClient must be a configured instance of DatabaseClient. If using DatabaseClient then event can be omitted and dbClient.event will be used, otherwise dbClient.event will be replaced with self.event</p>
-<dl class="py method">
+<dl class="method">
 <dt id="PgCognition.Cognito.AddClaims">
-<code class="sig-name descname">AddClaims</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extraClaims</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.AddClaims" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">AddClaims</code><span class="sig-paren">(</span><em class="sig-param">extraClaims={}</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.AddClaims" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds claims to Cognito user and returns the object’s event. Intended to be used with Cognito Pre Token Generation.
 Default is to add role and tenant.</p>
 <dl class="field-list simple">
@@ -283,7 +388,7 @@ Default is to add role and tenant.</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="PgCognition.Cognito.UserIsActive">
 <code class="sig-name descname">UserIsActive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.UserIsActive" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a bool indicating if a user exists and is active.
@@ -298,7 +403,7 @@ Useful for Cognito Pre Authentication hook</p>
 </dl>
 </dd></dl>
 
-<dl class="py method">
+<dl class="method">
 <dt id="PgCognition.Cognito.UserIsInvited">
 <code class="sig-name descname">UserIsInvited</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.UserIsInvited" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a bool indicating if a user has been invited or not</p>
@@ -323,7 +428,7 @@ before continuing with the signup process.</p>
 </div>
 <div class="section" id="module-PgCognition.cognition_functions">
 <span id="cognition-functions"></span><h1>cognition_functions<a class="headerlink" href="#module-PgCognition.cognition_functions" title="Permalink to this headline">¶</a></h1>
-<dl class="py function">
+<dl class="function">
 <dt id="PgCognition.cognition_functions.getCallerAccount">
 <code class="sig-prename descclassname">PgCognition.cognition_functions.</code><code class="sig-name descname">getCallerAccount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.cognition_functions.getCallerAccount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets account number of entity that called the function using sts service</p>
@@ -337,9 +442,9 @@ before continuing with the signup process.</p>
 </dl>
 </dd></dl>
 
-<dl class="py function">
+<dl class="function">
 <dt id="PgCognition.cognition_functions.validateConfig">
-<code class="sig-prename descclassname">PgCognition.cognition_functions.</code><code class="sig-name descname">validateConfig</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">requiredOpts</span></em>, <em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">defaults</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.cognition_functions.validateConfig" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">PgCognition.cognition_functions.</code><code class="sig-name descname">validateConfig</code><span class="sig-paren">(</span><em class="sig-param">requiredOpts</em>, <em class="sig-param">config</em>, <em class="sig-param">defaults={}</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.cognition_functions.validateConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Validate the config has all of the required values. For each required value if the option is not set in the config we will attempt to pull it from the environment before throwing an Exception.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -399,7 +504,7 @@ before continuing with the signup process.</p>
     </form>
     </div>
 </div>
-<script>$('#searchbox').show(0);</script>
+<script type="text/javascript">$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -418,7 +523,7 @@ before continuing with the signup process.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, Mathew Moon.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.3.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
     </div>
   </body>
 </html>
