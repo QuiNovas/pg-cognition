@@ -1,6 +1,6 @@
 import random
 import json
-from datetime import datetime
+from datetime import datetime, date
 from re import match
 from time import time_ns as ns
 from string import ascii_letters as letters
@@ -50,9 +50,10 @@ class Cognito():
         sql = f"""
             SELECT
                 t.name AS tenant,
-                pg_cognition.tenantrole('{email}', t.name::TEXT) AS role
-            FROM auth_data.users u
-            JOIN auth_data.tenants t ON u.tenant_id=t.id
+                pg_cognition.tenantrole('{email}', t.name::TEXT) AS role,
+                u.id AS userid
+            FROM cognition.users u
+            JOIN cognition.tenants t ON u.tenant_id=t.id
             WHERE u.email='{email}';
         """
 
@@ -63,6 +64,7 @@ class Cognito():
                 "claimsToAddOrOverride": {
                     "tenant": claims["tenant"],
                     "role": claims["role"],
+                    "userid": claims["userid"]
                 }
             }
         }
@@ -88,7 +90,7 @@ class Cognito():
 
         sql = """
             SELECT email, status
-                FROM pg_cognition.users u
+                FROM cognition.users u
                 WHERE u.email=:EMAIL AND status='active'
             LIMIT 1;
         """
@@ -135,7 +137,7 @@ class Cognito():
         return bool(self.dbClient.runQuery(sql, parameters))
 
     def createApplicationUser(self, caller=None):
-        userid = ''.join(random.choice(letters.lower()) for i in range(7)) + '_' + str(ns())
+        userid = ''.join(random.choice(letters.lower()) for i in range(12)) + '_' + datetime.now().strftime("%Y%m%d%H%M%S") + str(ns())
         dbRole = f"""{self.event["parameters"]['tenant']}_{self.event["parameters"]['role']}"""
         if self.dbClient.client_type == "serverless":
             secret = self.dbClient.getCredentials()
@@ -153,66 +155,72 @@ class Cognito():
 
         if self.userExists(self.event["parameters"]["email"]): raise Exception("User already exists.")
 
-        parameters, sql = [
-            {'name': 'EMAIL', 'value': {'stringValue': f'{self.event["parameters"]["email"]}'}},
-            {'name': 'FIRSTNAME', 'value': {'stringValue': f'{self.event["parameters"]["firstname"]}'}},
-            {'name': 'LASTNAME', 'value': {'stringValue': f'{self.event["parameters"]["lastname"]}'}},
-            {'name': 'DBROLE', 'value': {'stringValue': f'{dbRole}'}},
-            {'name': 'APPROLE', 'value': {'stringValue': f'{self.event["parameters"]["role"]}'}},
-            {'name': 'USERID', 'value': {'stringValue': f'{userid}'}},
-            {'name': 'TENANT', 'value': {'stringValue': f'{self.event["parameters"]["tenant"]}'}},
-            {'name': 'INVITEDATA', 'value': {'stringValue': f'{json.dumps(inviteData)}'}}
-        ],
-        """
-            INSERT INTO pg_cognition.users (id, email, first_name, last_name, status, invitation_data, tenant_id) VALUES (
-                :USERID,
-                :EMAIL,
-                :FIRSTNAME,
-                :LASTNAME,
-                'invited',
-               :INVITEDATA::jsonb,
-                (SELECT id FROM global_data.tenants WHERE name = :TENANT)
-            )
-            RETURNING
-                *,
-                (SELECT displayname from global_data.tenants WHERE name = :TENANT) AS tenant_name;
-        """ if self.dbClient == "serverless" else {
-            "EMAIL": self.event["parameters"]["email"],
-            "FIRSTNAME": self.event["parameters"]["firstname"],
-            "LASTNAME": self.event["parameters"]["lastname"],
-            "DBROLE": self.event["parameters"]["role"],
-            "APPROLE": self.event["parameters"]["role"],
-            "USERID": userid,
-            "TENANT": self.event["parameters"]["tenant"],
-            "INVITEDATA": json.dumps(inviteData)
-        },
-        """
-            INSERT INTO global_data.users (id, email, first_name, last_name, status, invitation_data, tenant_id) VALUES (
-                %(USERID)s,
-                %(EMAIL)s,
-                %(FIRSTNAME)s,
-                %(LASTNAME)s,
-                'invited',
-                %(INVITEDATA)s::jsonb,
-                (SELECT id FROM pg_cognition.tenants WHERE name = %(TENANT)s)
-            )
-            RETURNING
-                *,
-                (SELECT displayname from global_data.tenants WHERE name = %(TENANT)) AS tenant_name;
-        """
+        if self.dbClient.client_type == "serverless":
+            parameters = [
+                {'name': 'EMAIL', 'value': {'stringValue': f'{self.event["parameters"]["email"]}'}},
+                {'name': 'FIRSTNAME', 'value': {'stringValue': f'{self.event["parameters"]["firstname"]}'}},
+                {'name': 'LASTNAME', 'value': {'stringValue': f'{self.event["parameters"]["lastname"]}'}},
+                {'name': 'DBROLE', 'value': {'stringValue': f'{dbRole}'}},
+                {'name': 'APPROLE', 'value': {'stringValue': f'{self.event["parameters"]["role"]}'}},
+                {'name': 'USERID', 'value': {'stringValue': f'{userid}'}},
+                {'name': 'TENANT', 'value': {'stringValue': f'{self.event["parameters"]["tenant"]}'}},
+                {'name': 'INVITEDATA', 'value': {'stringValue': f'{json.dumps(inviteData)}'}}
+            ]
+            sql = """
+                INSERT INTO pg_cognition.users (id, email, first_name, last_name, status, invitation_data, tenant_id) VALUES (
+                    :USERID,
+                    :EMAIL,
+                    :FIRSTNAME,
+                    :LASTNAME,
+                    'invited',
+                   :INVITEDATA::jsonb,
+                    (SELECT id FROM global_data.tenants WHERE name = :TENANT)
+                )
+                RETURNING
+                    *,
+                    (SELECT displayname from global_data.tenants WHERE name = :TENANT) AS tenant_name;
+            """
+        elif self.dbClient == "instance":
+            parameters = {
+                "EMAIL": self.event["parameters"]["email"],
+                "FIRSTNAME": self.event["parameters"]["firstname"],
+                "LASTNAME": self.event["parameters"]["lastname"],
+                "DBROLE": self.event["parameters"]["role"],
+                "APPROLE": self.event["parameters"]["role"],
+                "USERID": userid,
+                "TENANT": self.event["parameters"]["tenant"],
+                "INVITEDATA": json.dumps(inviteData)
+            }
+            sql = """
+                INSERT INTO global_data.users (id, email, first_name, last_name, status, invitation_data, tenant_id) VALUES (
+                    %(USERID)s,
+                    %(EMAIL)s,
+                    %(FIRSTNAME)s,
+                    %(LASTNAME)s,
+                    'invited',
+                    %(INVITEDATA)s::jsonb,
+                    (SELECT id FROM pg_cognition.tenants WHERE name = %(TENANT)s)
+                )
+                RETURNING
+                    *,
+                    (SELECT displayname from global_data.tenants WHERE name = %(TENANT)) AS tenant_name;
+            """
 
         try:
             newUser = self.dbClient.runQuery(sql, parameters)[0]
             return newUser
 
         except Exception as e:
-            parameters, sql = {
-                {'name': 'USERID', 'value': {'stringValue': f'{userid}'}},
-            },
-            "DELETE FROM pg_cognition.users WHERE id = :USERID;" if self.dbClient.client_type == "serverless" else {
-                "USERID": userid
-            },
-            "DELETE FROM pg_cognition.users WHERE id = %(USERID)"
+            if self.dbClient.client_type == "serverless":
+                parameters = {
+                    {'name': 'USERID', 'value': {'stringValue': f'{userid}'}},
+                }
+                sql = "DELETE FROM pg_cognition.users WHERE id = :USERID;"
+            elif self.dbClient.client_type == "instance":
+                parameters = {
+                    "USERID": userid
+                }
+                sql = "DELETE FROM pg_cognition.users WHERE id = %(USERID)"
             try:
                 self.dbClient.runQuery(sql, parameters)
             except Exception:
