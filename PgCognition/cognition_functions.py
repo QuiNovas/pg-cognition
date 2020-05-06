@@ -46,3 +46,6 @@ def getCallerAccount():
         return boto3.client('sts').get_caller_identity().get('Account')
     except ClientError as e:
         raise Exception(e.response)
+
+def getCallerFromSecret(secret):
+    return secret.split("/")[-1]

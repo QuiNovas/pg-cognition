@@ -1,4 +1,11 @@
+import random
+import json
+from datetime import datetime
+from re import match
+from time import time_ns as ns
+from string import ascii_letters as letters
 from .DatabaseClient import DatabaseClient
+from .cognition_functions import getCallerFromSecret
 
 class Cognito():
     """Methods useful in building cognito hooks
@@ -15,17 +22,17 @@ class Cognito():
     You can only pass one of config or dbClient. dbClient must be a configured instance of DatabaseClient. If using DatabaseClient then event can be omitted and dbClient.event will be used, otherwise dbClient.event will be replaced with self.event
     """
 
-    def __init__(self, event=None, config=None, dbClient=None):
+    def __init__(self, event=None, config=None, dbClient=None, client_type="instance"):
         if config is not None and dbClient is not None:
             raise Exception("You must pass only ONE of config or dbClient")
-        if dbClient is not None:
+        if isinstance(dbClient, DatabaseClient):
             if event is not None:
                 dbClient.event = event
             self.dbClient = dbClient
             self.event = dbClient.event
             self.config = dbClient.config
         else:
-            self.dbClient = DatabaseClient(event=event, config=config)
+            self.dbClient = DatabaseClient(event=event, config=config, client_type=client_type)
             self.event = event
 
     def AddClaims(self, extraClaims={}):
@@ -116,3 +123,98 @@ class Cognito():
         """
 
         return bool(self.dbClient.runQuery(sql, parameters=parameters))
+
+    def userExists(self, email):
+        if self.dbClient.client_type == "serverless":
+            parameters = [{'name': 'EMAIL', 'value': {'stringValue': f'{email}'}}]
+            sql = "SELECT id FROM pg_cognition.users WHERE email = :EMAIL;"
+        else:
+            parameters = {"EMAIL": email}
+            sql = "SELECT id FROM pg_cognition.users where email = %(EMAIL)s;"
+
+        return bool(self.dbClient.runQuery(sql, parameters))
+
+    def createApplicationUser(self, caller=None):
+        userid = ''.join(random.choice(letters.lower()) for i in range(7)) + '_' + str(ns())
+        dbRole = f"""{self.event["parameters"]['tenant']}_{self.event["parameters"]['role']}"""
+        if self.dbClient.client_type == "serverless":
+            secret = self.dbClient.getCredentials()
+            caller = getCallerFromSecret(secret)
+
+        inviteData = {
+            "invited_by": caller,
+            "invite_date": str(datetime.now()),
+            "role": dbRole,
+            "tenant": self.event["parameters"]["tenant"]
+        }
+
+        assert match('^[a-zA-Z0-9_]+$', self.event["parameters"]["tenant"]) and match('^[a-zA-Z0-9_]+$', self.event["parameters"]["role"]), \
+            "Invalid tenant or role name"
+
+        if self.userExists(self.event["parameters"]["email"]): raise Exception("User already exists.")
+
+        parameters, sql = [
+            {'name': 'EMAIL', 'value': {'stringValue': f'{self.event["parameters"]["email"]}'}},
+            {'name': 'FIRSTNAME', 'value': {'stringValue': f'{self.event["parameters"]["firstname"]}'}},
+            {'name': 'LASTNAME', 'value': {'stringValue': f'{self.event["parameters"]["lastname"]}'}},
+            {'name': 'DBROLE', 'value': {'stringValue': f'{dbRole}'}},
+            {'name': 'APPROLE', 'value': {'stringValue': f'{self.event["parameters"]["role"]}'}},
+            {'name': 'USERID', 'value': {'stringValue': f'{userid}'}},
+            {'name': 'TENANT', 'value': {'stringValue': f'{self.event["parameters"]["tenant"]}'}},
+            {'name': 'INVITEDATA', 'value': {'stringValue': f'{json.dumps(inviteData)}'}}
+        ],
+        """
+            INSERT INTO pg_cognition.users (id, email, first_name, last_name, status, invitation_data, tenant_id) VALUES (
+                :USERID,
+                :EMAIL,
+                :FIRSTNAME,
+                :LASTNAME,
+                'invited',
+               :INVITEDATA::jsonb,
+                (SELECT id FROM global_data.tenants WHERE name = :TENANT)
+            )
+            RETURNING
+                *,
+                (SELECT displayname from global_data.tenants WHERE name = :TENANT) AS tenant_name;
+        """ if self.dbClient == "serverless" else {
+            "EMAIL": self.event["parameters"]["email"],
+            "FIRSTNAME": self.event["parameters"]["firstname"],
+            "LASTNAME": self.event["parameters"]["lastname"],
+            "DBROLE": self.event["parameters"]["role"],
+            "APPROLE": self.event["parameters"]["role"],
+            "USERID": userid,
+            "TENANT": self.event["parameters"]["tenant"],
+            "INVITEDATA": json.dumps(inviteData)
+        },
+        """
+            INSERT INTO global_data.users (id, email, first_name, last_name, status, invitation_data, tenant_id) VALUES (
+                %(USERID)s,
+                %(EMAIL)s,
+                %(FIRSTNAME)s,
+                %(LASTNAME)s,
+                'invited',
+                %(INVITEDATA)s::jsonb,
+                (SELECT id FROM pg_cognition.tenants WHERE name = %(TENANT)s)
+            )
+            RETURNING
+                *,
+                (SELECT displayname from global_data.tenants WHERE name = %(TENANT)) AS tenant_name;
+        """
+
+        try:
+            newUser = self.dbClient.runQuery(sql, parameters)[0]
+            return newUser
+
+        except Exception as e:
+            parameters, sql = {
+                {'name': 'USERID', 'value': {'stringValue': f'{userid}'}},
+            },
+            "DELETE FROM pg_cognition.users WHERE id = :USERID;" if self.dbClient.client_type == "serverless" else {
+                "USERID": userid
+            },
+            "DELETE FROM pg_cognition.users WHERE id = %(USERID)"
+            try:
+                self.dbClient.runQuery(sql, parameters)
+            except Exception:
+                pass
+            raise e

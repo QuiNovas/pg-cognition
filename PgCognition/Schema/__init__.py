@@ -7,3 +7,4 @@ from .GetTenantsFunction import GET_TENANTS
 from .RLS import *
 from .Grants import GRANTS
 from .Builder import Builder
+from .StepdownFunction import SWITCH_ROLE

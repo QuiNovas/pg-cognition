@@ -7,6 +7,9 @@
 pyvenv.cfg
 bin/
 *_ignore.py
+*_ignore.sql
+*_ignore.sh
+*_ignore.txt
 
 # User-specific stuff:
 .idea/

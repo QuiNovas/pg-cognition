@@ -90,7 +90,7 @@ class DatabaseClient():
         """
 
         if "switch_role" in kwargs and kwargs["switch_role"] is not None:
-            sql = f"""SET ROLE {kwargs["switch_role"]}; {sql}"""
+            sql = f"""SELECT cognition.switch_role('{kwargs["switch_role"]}'); {sql}"""
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = {} if "parameters" not in kwargs else kwargs["parameters"]
         cursor_type = DictCursor if pretty else None
