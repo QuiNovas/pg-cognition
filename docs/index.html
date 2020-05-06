@@ -1,18 +1,18 @@
 
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
   <head>
     <meta charset="utf-8" />
     <title>PgCognition documentation &#8212; PgCognition  documentation</title>
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
-    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
-    <script type="text/javascript" src="_static/jquery.js"></script>
-    <script type="text/javascript" src="_static/underscore.js"></script>
-    <script type="text/javascript" src="_static/doctools.js"></script>
-    <script type="text/javascript" src="_static/language_data.js"></script>
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
     
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" /> 
@@ -42,9 +42,9 @@
 </div>
 <div class="section" id="databaseclient">
 <h1>DatabaseClient<a class="headerlink" href="#databaseclient" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="PgCognition.DatabaseClient">
-<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">DatabaseClient</code><span class="sig-paren">(</span><em class="sig-param">event=None</em>, <em class="sig-param">config={}</em>, <em class="sig-param">client_type='instance'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">DatabaseClient</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config</span><span class="o">=</span><span class="default_value">{}</span></em>, <em class="sig-param"><span class="n">client_type</span><span class="o">=</span><span class="default_value">'instance'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
@@ -75,9 +75,9 @@
 <dd class="field-even"><p>Options required in config can be omitted if they exist in os.environ. Options to be taken from the environment should have their names specified in all caps.</p>
 </dd>
 </dl>
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.createDatabaseUser">
-<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param">login=False</em>, <em class="sig-param">email=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">login</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">email</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a database user</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -89,7 +89,7 @@
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.getCredentials">
 <code class="sig-name descname">getCredentials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.getCredentials" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ARN for the secret containing the RDS credentials for the user who called us.</p>
@@ -116,9 +116,9 @@
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.resolveAppsyncQuery">
-<code class="sig-name descname">resolveAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">schema=''</em>, <em class="sig-param">secretArn=None</em>, <em class="sig-param">client_type=None</em>, <em class="sig-param">switch_role=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveAppsyncQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resolveAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">schema</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">secretArn</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">client_type</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">switch_role</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveAppsyncQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query for each item in event</p>
 <p>This is a wrapper for self.resolveInstanceAppsyncQuery and resolveServerlessAppsyncQuery.
 The method this will return depends on self.client_type. See the above mentioned
@@ -133,9 +133,9 @@ methods for documentation.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.resolveInstanceAppsyncQuery">
-<code class="sig-name descname">resolveInstanceAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">switch_role=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveInstanceAppsyncQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resolveInstanceAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">switch_role</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveInstanceAppsyncQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query for each item in the event.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -150,9 +150,9 @@ methods for documentation.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.resolveServerlessAppsyncQuery">
-<code class="sig-name descname">resolveServerlessAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">schema=''</em>, <em class="sig-param">secretArn=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveServerlessAppsyncQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">resolveServerlessAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">schema</span><span class="o">=</span><span class="default_value">''</span></em>, <em class="sig-param"><span class="n">secretArn</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveServerlessAppsyncQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query for each item in the event.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -170,9 +170,9 @@ methods for documentation.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.runInstanceQuery">
-<code class="sig-name descname">runInstanceQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runInstanceQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">runInstanceQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sql</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runInstanceQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query against an Postgresql database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -192,9 +192,9 @@ methods for documentation.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.runQuery">
-<code class="sig-name descname">runQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">runQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sql</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run an SQL query</p>
 <p>This method is a convenience wrapper for runInstanceQuery and runServerlessQuery
 The method called whose return value is returned from this method and whose
@@ -210,9 +210,9 @@ See above mentioned methods for documentation</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.DatabaseClient.runServerlessQuery">
-<code class="sig-name descname">runServerlessQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runServerlessQuery" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">runServerlessQuery</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">sql</span></em>, <em class="sig-param"><span class="o">**</span><span class="n">kwargs</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runServerlessQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query against an Aurora Serverless Postgresql database</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -245,9 +245,9 @@ See above mentioned methods for documentation</p>
 </div>
 <div class="section" id="cognito">
 <h1>Cognito<a class="headerlink" href="#cognito" title="Permalink to this headline">¶</a></h1>
-<dl class="class">
+<dl class="py class">
 <dt id="PgCognition.Cognito">
-<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">Cognito</code><span class="sig-paren">(</span><em class="sig-param">event=None</em>, <em class="sig-param">config=None</em>, <em class="sig-param">dbClient=None</em>, <em class="sig-param">client_type='instance'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">Cognito</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">event</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">config</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">dbClient</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">client_type</span><span class="o">=</span><span class="default_value">'instance'</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito" title="Permalink to this definition">¶</a></dt>
 <dd><p>Methods useful in building cognito hooks</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -265,9 +265,9 @@ See above mentioned methods for documentation</p>
 </dd>
 </dl>
 <p>You can only pass one of config or dbClient. dbClient must be a configured instance of DatabaseClient. If using DatabaseClient then event can be omitted and dbClient.event will be used, otherwise dbClient.event will be replaced with self.event</p>
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.Cognito.AddClaims">
-<code class="sig-name descname">AddClaims</code><span class="sig-paren">(</span><em class="sig-param">extraClaims={}</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.AddClaims" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">AddClaims</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">extraClaims</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.AddClaims" title="Permalink to this definition">¶</a></dt>
 <dd><p>Adds claims to Cognito user and returns the object’s event. Intended to be used with Cognito Pre Token Generation.
 Default is to add role and tenant.</p>
 <dl class="field-list simple">
@@ -283,7 +283,7 @@ Default is to add role and tenant.</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.Cognito.UserIsActive">
 <code class="sig-name descname">UserIsActive</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.UserIsActive" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a bool indicating if a user exists and is active.
@@ -298,7 +298,7 @@ Useful for Cognito Pre Authentication hook</p>
 </dl>
 </dd></dl>
 
-<dl class="method">
+<dl class="py method">
 <dt id="PgCognition.Cognito.UserIsInvited">
 <code class="sig-name descname">UserIsInvited</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito.UserIsInvited" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a bool indicating if a user has been invited or not</p>
@@ -323,7 +323,7 @@ before continuing with the signup process.</p>
 </div>
 <div class="section" id="module-PgCognition.cognition_functions">
 <span id="cognition-functions"></span><h1>cognition_functions<a class="headerlink" href="#module-PgCognition.cognition_functions" title="Permalink to this headline">¶</a></h1>
-<dl class="function">
+<dl class="py function">
 <dt id="PgCognition.cognition_functions.getCallerAccount">
 <code class="sig-prename descclassname">PgCognition.cognition_functions.</code><code class="sig-name descname">getCallerAccount</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.cognition_functions.getCallerAccount" title="Permalink to this definition">¶</a></dt>
 <dd><p>Gets account number of entity that called the function using sts service</p>
@@ -337,9 +337,9 @@ before continuing with the signup process.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
+<dl class="py function">
 <dt id="PgCognition.cognition_functions.validateConfig">
-<code class="sig-prename descclassname">PgCognition.cognition_functions.</code><code class="sig-name descname">validateConfig</code><span class="sig-paren">(</span><em class="sig-param">requiredOpts</em>, <em class="sig-param">config</em>, <em class="sig-param">defaults={}</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.cognition_functions.validateConfig" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">PgCognition.cognition_functions.</code><code class="sig-name descname">validateConfig</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">requiredOpts</span></em>, <em class="sig-param"><span class="n">config</span></em>, <em class="sig-param"><span class="n">defaults</span><span class="o">=</span><span class="default_value">{}</span></em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.cognition_functions.validateConfig" title="Permalink to this definition">¶</a></dt>
 <dd><p>Validate the config has all of the required values. For each required value if the option is not set in the config we will attempt to pull it from the environment before throwing an Exception.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -399,7 +399,7 @@ before continuing with the signup process.</p>
     </form>
     </div>
 </div>
-<script type="text/javascript">$('#searchbox').show(0);</script>
+<script>$('#searchbox').show(0);</script>
         </div>
       </div>
       <div class="clearer"></div>
@@ -418,7 +418,7 @@ before continuing with the signup process.</p>
     </div>
     <div class="footer" role="contentinfo">
         &#169; Copyright 2020, Mathew Moon.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 2.2.1.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 3.0.3.
     </div>
   </body>
 </html>
