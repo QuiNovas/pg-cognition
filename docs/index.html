@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>pg-cognition documentation &#8212; pg-cognition  documentation</title>
+    <title>PgCognition documentation &#8212; PgCognition  documentation</title>
     <link rel="stylesheet" href="_static/custom.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
@@ -26,7 +26,7 @@
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">pg-cognition  documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">PgCognition  documentation</a> &#187;</li> 
       </ul>
     </div>  
 
@@ -35,8 +35,8 @@
         <div class="bodywrapper">
           <div class="body" role="main">
             
-  <div class="section" id="pg-cognition-documentation">
-<h1>pg-cognition documentation<a class="headerlink" href="#pg-cognition-documentation" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="pgcognition-documentation">
+<h1>PgCognition documentation<a class="headerlink" href="#pgcognition-documentation" title="Permalink to this headline">¶</a></h1>
 <div class="toctree-wrapper compound">
 </div>
 </div>
@@ -77,7 +77,7 @@
 </dl>
 <dl class="method">
 <dt id="PgCognition.DatabaseClient.createDatabaseUser">
-<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param">login=False</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param">login=False</em>, <em class="sig-param">email=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a database user</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns</dt>
@@ -186,6 +186,7 @@ methods for documentation.</p>
 <li><p><em>pretty</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – format the results as a list of dicts, one per row, with the keys as column names, default True</p></li>
 <li><p><em>parameters</em> (<code class="docutils literal notranslate"><span class="pre">list</span></code>) – a list of parameters to pass to the query in psycopg2’s format</p></li>
 <li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">string</span></code>) – Run “SET ROLE &lt;switch_role&gt;” before executing the query to escalate/deescalate privileges</p></li>
+<li><p><em>commit</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – Commit directly after query</p></li>
 </ul>
 </dd>
 </dl>
@@ -246,7 +247,7 @@ See above mentioned methods for documentation</p>
 <h1>Cognito<a class="headerlink" href="#cognito" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="PgCognition.Cognito">
-<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">Cognito</code><span class="sig-paren">(</span><em class="sig-param">event=None</em>, <em class="sig-param">config=None</em>, <em class="sig-param">dbClient=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">PgCognition.</code><code class="sig-name descname">Cognito</code><span class="sig-paren">(</span><em class="sig-param">event=None</em>, <em class="sig-param">config=None</em>, <em class="sig-param">dbClient=None</em>, <em class="sig-param">client_type='instance'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.Cognito" title="Permalink to this definition">¶</a></dt>
 <dd><p>Methods useful in building cognito hooks</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -375,7 +376,7 @@ before continuing with the signup process.</p>
         <div class="sphinxsidebarwrapper">
   <h3><a href="#">Table of Contents</a></h3>
   <ul>
-<li><a class="reference internal" href="#">pg-cognition documentation</a></li>
+<li><a class="reference internal" href="#">PgCognition documentation</a></li>
 <li><a class="reference internal" href="#databaseclient">DatabaseClient</a></li>
 <li><a class="reference internal" href="#cognito">Cognito</a></li>
 <li><a class="reference internal" href="#module-PgCognition.cognition_functions">cognition_functions</a></li>
@@ -412,7 +413,7 @@ before continuing with the signup process.</p>
         <li class="right" >
           <a href="py-modindex.html" title="Python Module Index"
              >modules</a> |</li>
-        <li class="nav-item nav-item-0"><a href="#">pg-cognition  documentation</a> &#187;</li> 
+        <li class="nav-item nav-item-0"><a href="#">PgCognition  documentation</a> &#187;</li> 
       </ul>
     </div>
     <div class="footer" role="contentinfo">
