@@ -52,13 +52,22 @@ class DatabaseClient():
                 port=self.config["port"]
             )
             self.client_type = "instance"
+            self.commit = self.client.commit
 
     def close(self):
+        """Close the database connection for client_type of "instance"
+
+        :Note: This will throw an AttributeError if client_type is not "instance"
+
+        :returns: None
+        :rtype: None
+        """
+
         if self.client_type == "instance":
             self.client.close()
 
     def runQuery(self, sql, **kwargs):
-        """Run an SQL query
+        """Run an SQL query HELLO
 
         This method is a convenience wrapper for runInstanceQuery and runServerlessQuery
         The method called whose return value is returned from this method and whose
@@ -67,6 +76,10 @@ class DatabaseClient():
 
         :returns: List or Dictionary of query results
         :rtype: list or dict
+
+        :Example:
+        .. code-block:: python
+            client.runQuery("SELECT * FROM foo", switch_role="somerole")
         """
 
         if isinstance(self.client, psycopg2.extensions.connection):
@@ -80,8 +93,6 @@ class DatabaseClient():
 
         :param sql: SQL statement to execute
         :type sql: str, required
-        :param \**kwargs: See below
-        :type \**kwargs: mixed
 
         :Keyword Arguments:
             * *pretty* (``bool``) -- format the results as a list of dicts, one per row, with the keys as column names, default True
@@ -112,8 +123,6 @@ class DatabaseClient():
 
         :param sql: SQL statement to execute
         :type sql: str, required
-        :param \**kwargs: See below
-        :type \**kwargs: mixed
 
         :Keyword Arguments:
             * *schema* (``str``) -- schema to use. Boto3 does not currently respect this. Use the full path to your table in the query instead
@@ -153,11 +162,16 @@ class DatabaseClient():
     def resolveAppsyncQuery(self, schema="", secretArn=None, client_type=None, switch_role=None):
         """Run a query for each item in event
 
-        This is a wrapper for self.resolveInstanceAppsyncQuery and resolveServerlessAppsyncQuery.
-        The method this will return depends on self.client_type. See the above mentioned
-        methods for documentation.
+        This is a wrapper for DatabaseClient.resolveInstanceAppsyncQuery and DatabaseClient.resolveServerlessAppsyncQuery and
+        will return the result of one of these two methods, depending on whether client_type is "serverless" or "instance".
+        See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.DatabaseClient.resolveServerlessAppsyncQuery
 
-        :returns: Dictionary or list of query results
+        :Keyword Arguments:
+            * *schema* (``str``) -- Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query. Only used if client_type = "serverless"
+            * *secretArn (``str``) -- Override databaseSecretArn from config. Only used if client_type = "serverless"
+            * *switch_role* (``str``) -- Excute query as specific user. The current connection must use a user with permission to assume this role. Only used if client_type = "instance"
+
+        :returns: Query results from PgCognition.DatabaseClient.resolveInstanceAppsyncQuery or PgCognition.DatabaseClient.resolveServerlessAppsyncQuery
         :rtype: dict or list
         """
 
@@ -172,8 +186,9 @@ class DatabaseClient():
     def resolveInstanceAppsyncQuery(self, switch_role=None):
         """Run a query for each item in the event.
 
-        :param switch_role: Run "SET ROLE <switch_role>" before executing the query to escalate/deescalate privileges
-        :type switch_role: str, optional
+        :Keyword Arguments:
+            * *switch_role* (``str``) -- Excute query as specific user. The current connection must use a user with permission to assume this role
+
         :returns: list of dicts or list of list of dicts with column names as keys
         :rtype: list
         """
@@ -199,10 +214,10 @@ class DatabaseClient():
     def resolveServerlessAppsyncQuery(self, schema="", secretArn=None):
         """Run a query for each item in the event.
 
-        :param schema: Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query.
-        :type schema: str or None, optional
-        :param secretArn: Override databaseSecretArn from config
-        :type secretArn: str, optional
+        :Keyword Arguments:
+            * *schema* (``str``) -- Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query.
+            * *secretArn (``str``) -- Override databaseSecretArn from config
+
         :returns: list of dicts or list of list of dicts with column names as keys
         :rtype: list
         """
@@ -248,8 +263,6 @@ class DatabaseClient():
             2. If caller is matched in roleOverrides
             3. If caller is matched in assumedRoleOverrides
 
-        :param event: event from Lambda
-        :type event: dict or list
         :returns: The arn of an AWS secret
         :rtype: str
         """
@@ -278,11 +291,20 @@ class DatabaseClient():
         return secret
 
     def createDatabaseUser(self, login=False, email=None):
-        """Creates a database user
+        """Creates a database user, optionally from the email address found in the Lambda event
 
-        :returns: Dictionary container new user's secret and database information
+        :Keyword Arguments:
+            * *login* (``bool``) -- Whether or not this will be a login user
+            * *email* (``str``) -- Override the email address from self.event["user"]["email"]
+
+        :returns: Dictionary containing new user's database credentials and corresponding user from cognition.users table
         :rtype: dict
+
+
+        :Note: If login=True then a random password will be generated and the user granted LOGIN privileges, if False then this will
+        be a role that can only be used to switch to after login. EG: using switch_role option to PgCognition.DatabaseClient.runInstanceQuery()
         """
+
         dbpass = ''.join(random.choice('!@#$%^&*()_-+=1234567890' + letters) for i in range(31))
         email = email if email is not None else self.event["user"]["email"]
         try:
@@ -364,6 +386,13 @@ class DatabaseClient():
             raise e
 
     def deleteSecret(self, user, wait=True):
+        """Deletes an AWS Secret
+        :param user:  Email address of the user to remove the secret for
+        :type user: str
+
+        :Keyword Arguments:
+            * *wait* (``bool``) -- Block until delete is complete
+        """
         s = boto3.client("secretsmanager")
         s.delete_secret(
             SecretId=f'{self.config["secretsPath"]}/{user}',
@@ -374,6 +403,19 @@ class DatabaseClient():
                 sleep(5)
 
     def createSecret(self, userid, email, dbpass, upsert=True):
+        """Creates an AWS Secret to use for database credentials
+
+        :param userid: The database username to put in the secret
+        :type userid: str
+        :param email: The cognito email address for the database user
+        :type email: str
+        :param dbpass: Database password to store
+        :type dbpass: str
+
+        :Keyword Arguments:
+            * *upsert* (``bool``) -- If True (default) then update the secret if a secret for this email address. Other wise an Exception will be raised.
+
+        """
         s = boto3.client('secretsmanager')
         secretString = {
             "dbClusterIdentifier": self.config["databaseArn"],
