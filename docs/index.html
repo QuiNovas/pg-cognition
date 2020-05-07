@@ -255,8 +255,8 @@ If group kwarg is provided the role will be created inside of that group.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="PgCognition.DatabaseClient.getCredentials">
-<code class="sig-name descname">getCredentials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.getCredentials" title="Permalink to this definition">¶</a></dt>
+<dt id="PgCognition.DatabaseClient.getSecretFromIdentity">
+<code class="sig-name descname">getSecretFromIdentity</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.getSecretFromIdentity" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ARN for the secret containing the RDS credentials for the user who called us.</p>
 <dl class="simple">
 <dt>Secrets for cognito users are constructed as:</dt><dd><p>arn:aws:secretsmanager:{region}:{account}:{secretsPath}/{event[“identity”][“email”]}</p>

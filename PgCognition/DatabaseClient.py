@@ -107,10 +107,24 @@ class DatabaseClient():
         The method called whose return value is returned from this method and whose arguments
         should be passed will depend on self.client_type
 
-        See PgCognition.DatabaseClient.runInstanceQuery and PgCognition.DatabaseClient.runServerlessQuery for arguments
+
+        :Keyword Arguments:
+            * *pretty* (``bool``) -- format the results as a list of dicts, one per row, with the keys as column names, default True
+            * *parameters* (``list``) -- a list of parameters to pass to the query in psycopg2's format
+            * *switch_role* (``string``) -- Execute as <role>. Only available for "instance" client_type
+            * *commit* (``bool``) -- Commit directly after query. Only available for "instance" client_type
+            * *secret* (``str``) -- override config["databaseSecretArn"] for serverless clients
+            * *database* (``str``) -- override config["database"] for serverless clients
+            * *databaseArn* (``str``) -- override config["databaseArn"] for serverless clients
+            * *schema* (``str``) -- schema to use for serverless clients
 
         :returns: List or Dictionary of query results
         :rtype: list or dict
+
+        Boto3 does not currently respect the schema argument. Use the full path to your table in the query instead. if pretty=True then
+        query results will be returned after being formatted by auroraPrettyParser.parseResults (serverless clients) or a dict
+        using pyscopg2.extras.DictCursor cast to a dict (instance clients). Otherwise results will be returned using the underlying client's
+        default formatting. To use with Appsync you would pretty much always want pretty=True
 
         *Example with a standard Postgres database*
 
@@ -129,12 +143,12 @@ class DatabaseClient():
         """
 
         if isinstance(self.client, psycopg2.extensions.connection):
-            res = self.runInstanceQuery(sql, **kwargs)
+            res = self._runInstanceQuery(sql, **kwargs)
         else:
-            res = self.runServerlessQuery(sql, **kwargs)
+            res = self._runServerlessQuery(sql, **kwargs)
         return res
 
-    def runInstanceQuery(self, sql, **kwargs):
+    def _runInstanceQuery(self, sql, **kwargs):
         r"""Run a query against an Postgresql database
 
         :param sql: SQL statement to execute
@@ -167,7 +181,7 @@ class DatabaseClient():
             r = []
         return r
 
-    def runServerlessQuery(self, sql, **kwargs):
+    def _runServerlessQuery(self, sql, **kwargs):
         r"""Run a query against an Aurora Serverless Postgresql database
 
         :param sql: SQL statement to execute
@@ -194,7 +208,7 @@ class DatabaseClient():
         elif "databaseSecretArn" in self.config:
             secret = self.config["databaseSecretArn"]
         else:
-            secret = self.getCredentials()
+            secret = self.getSecretFromIdentity()
 
         res = self.client.execute_statement(
             secretArn=secret,
@@ -246,12 +260,12 @@ class DatabaseClient():
         if client_type is None:
             client_type = self.client_type
         if client_type == "serverless":
-            res = self.resolveServerlessAppsyncQuery(schema=schema, secretArn=secretArn)
+            res = self._resolveServerlessAppsyncQuery(schema=schema, secretArn=secretArn)
         else:
-            res = self.resolveInstanceAppsyncQuery(switch_role=switch_role)
+            res = self._resolveInstanceAppsyncQuery(switch_role=switch_role)
         return res
 
-    def resolveInstanceAppsyncQuery(self, switch_role=None):
+    def _resolveInstanceAppsyncQuery(self, switch_role=None):
         """Run a query for each item in the event.
 
         :Keyword Arguments:
@@ -264,7 +278,7 @@ class DatabaseClient():
         if isinstance(self.event, list):
             res = []
             for n in range(len(self.event)):
-                result = self.runInstanceQuery(
+                result = self._runInstanceQuery(
                     self.event[n]["query"],
                     parameters=self.event[n]["parameters"],
                     switch_role=switch_role
@@ -272,14 +286,14 @@ class DatabaseClient():
                 res.append(result)
 
         else:
-            result = self.runInstanceQuery(
+            result = self._runInstanceQuery(
                 self.event[n]["query"],
                 parameters=self.event["parameters"],
                 switch_role=switch_role
             )
         return result
 
-    def resolveServerlessAppsyncQuery(self, schema="", secretArn=None):
+    def _resolveServerlessAppsyncQuery(self, schema="", secretArn=None):
         """Run a query for each item in the event.
 
         :Keyword Arguments:
@@ -295,12 +309,12 @@ class DatabaseClient():
             elif "databaseSecretArn" in self.config and secretArn is None:
                 secret = self.config["databaseSecretArn"]
             else:
-                secret = self.getCredentials()
+                secret = self.getSecretFromIdentity()
 
             if isinstance(self.event, list):
                 res = []
                 for n in range(len(self.event)):
-                    result = self.runServerlessQuery(
+                    result = self._runServerlessQuery(
                         self.event[n]["query"],
                         schema=schema,
                         parameters=self.event[n]["parameters"],
@@ -308,7 +322,7 @@ class DatabaseClient():
                     )
                     res.append(result)
             else:
-                res = self.runServerlessQuery(
+                res = self._runServerlessQuery(
                     self.event["query"],
                     schema=schema,
                     parameters=self.event["parameters"],
@@ -319,7 +333,7 @@ class DatabaseClient():
 
         return res
 
-    def getCredentials(self):
+    def getSecretFromIdentity(self):
         """
         Get ARN for the secret containing the RDS credentials for the user who called us.
 
