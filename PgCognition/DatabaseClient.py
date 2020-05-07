@@ -222,6 +222,25 @@ class DatabaseClient():
 
         :returns: Query results from PgCognition.DatabaseClient.resolveInstanceAppsyncQuery or PgCognition.DatabaseClient.resolveServerlessAppsyncQuery
         :rtype: dict or list
+
+        *Example of an AWS Lambda function used as an Appsync datasource with a serverless database*
+
+        .. code-block:: python
+
+            from os import environ
+            from PgCognition import DatabaseClient
+
+            def handler(event, context):
+                config = {
+                    "database": environ["DATABASE"],
+                    "account": environ["ACCOUNT"],
+                    "databaseArn": environ["DATABASE_ARN"],
+                    "assumedRoleOverrides": {"administrator": "root", "developer": "root"}, # This allows our awscli users calling Appsync
+                    "region": environ["AWS_REGION"],
+                    "secretsPath": "rds-db-credentials"
+                }
+                dbClient = DatabaseClient(event=event, config=config, client_type="serverless")
+                return dbClient.resolveAppsyncQuery()
         """
 
         if client_type is None:

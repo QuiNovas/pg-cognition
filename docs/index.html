@@ -100,8 +100,7 @@
     <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="s2">&quot;us-east-1&quot;</span><span class="p">,</span>
     <span class="s2">&quot;secretsPath&quot;</span><span class="p">:</span> <span class="s2">&quot;rds-db-credentials&quot;</span>
 <span class="p">}</span>
-<span class="n">dbClient</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
-<span class="k">return</span> <span class="n">dbClient</span><span class="o">.</span><span class="n">resolveAppsyncQuery</span><span class="p">()</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
 <span class="n">res</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">runQuery</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mytable&quot;</span><span class="p">,</span> <span class="n">switch_role</span><span class="o">=</span><span class="s2">&quot;less_privileged_role&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -399,6 +398,23 @@ See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.Datab
 <dd class="field-odd"><p>dict or list</p>
 </dd>
 </dl>
+<p><em>Example of an AWS Lambda function used as an Appsync datasource with a serverless database</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">environ</span>
+<span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="k">def</span> <span class="nf">handler</span><span class="p">(</span><span class="n">event</span><span class="p">,</span> <span class="n">context</span><span class="p">):</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;database&quot;</span><span class="p">:</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DATABASE&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;account&quot;</span><span class="p">:</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;ACCOUNT&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;databaseArn&quot;</span><span class="p">:</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;DATABASE_ARN&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;assumedRoleOverrides&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;administrator&quot;</span><span class="p">:</span> <span class="s2">&quot;root&quot;</span><span class="p">,</span> <span class="s2">&quot;developer&quot;</span><span class="p">:</span> <span class="s2">&quot;root&quot;</span><span class="p">},</span> <span class="c1"># This allows our awscli users calling Appsync</span>
+        <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_REGION&quot;</span><span class="p">],</span>
+        <span class="s2">&quot;secretsPath&quot;</span><span class="p">:</span> <span class="s2">&quot;rds-db-credentials&quot;</span>
+    <span class="p">}</span>
+    <span class="n">dbClient</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">dbClient</span><span class="o">.</span><span class="n">resolveAppsyncQuery</span><span class="p">()</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
