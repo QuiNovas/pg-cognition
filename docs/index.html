@@ -411,68 +411,10 @@ See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.Datab
         <span class="s2">&quot;region&quot;</span><span class="p">:</span> <span class="n">environ</span><span class="p">[</span><span class="s2">&quot;AWS_REGION&quot;</span><span class="p">],</span>
         <span class="s2">&quot;secretsPath&quot;</span><span class="p">:</span> <span class="s2">&quot;rds-db-credentials&quot;</span>
     <span class="p">}</span>
-    <span class="n">dbClient</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">)</span>
+    <span class="n">dbClient</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">event</span><span class="o">=</span><span class="n">event</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;serverless&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">dbClient</span><span class="o">.</span><span class="n">resolveAppsyncQuery</span><span class="p">()</span>
 </pre></div>
 </div>
-</dd></dl>
-
-<dl class="method">
-<dt id="PgCognition.DatabaseClient.resolveInstanceAppsyncQuery">
-<code class="sig-name descname">resolveInstanceAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">switch_role=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveInstanceAppsyncQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a query for each item in the event.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Keyword Arguments</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Excute query as specific user. The current connection must use a user with permission to assume this role</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list of dicts or list of list of dicts with column names as keys</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="PgCognition.DatabaseClient.resolveServerlessAppsyncQuery">
-<code class="sig-name descname">resolveServerlessAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">schema=''</em>, <em class="sig-param">secretArn=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveServerlessAppsyncQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a query for each item in the event.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Keyword Arguments</dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Schema name. Boto3 rds-client doesn’t acually honor this right not. It is best to use the full path to your table in your query.</p></li>
-<li><p><em>secretArn</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns</dt>
-<dd class="field-even"><p>list of dicts or list of list of dicts with column names as keys</p>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>list</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="method">
-<dt id="PgCognition.DatabaseClient.runInstanceQuery">
-<code class="sig-name descname">runInstanceQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runInstanceQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a query against an Postgresql database</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>sql</strong> (<em>str</em><em>, </em><em>required</em>) – SQL statement to execute</p>
-</dd>
-<dt class="field-even">Keyword Arguments</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><em>pretty</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – format the results as a list of dicts, one per row, with the keys as column names, default True</p></li>
-<li><p><em>parameters</em> (<code class="docutils literal notranslate"><span class="pre">list</span></code>) – a list of parameters to pass to the query in psycopg2’s format</p></li>
-<li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">string</span></code>) – Run “SET ROLE &lt;switch_role&gt;” before executing the query to escalate/deescalate privileges</p></li>
-<li><p><em>commit</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – Commit directly after query</p></li>
-</ul>
-</dd>
-</dl>
 </dd></dl>
 
 <dl class="method">
@@ -482,15 +424,30 @@ See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.Datab
 <p>This method is a convenience wrapper for runInstanceQuery and runServerlessQuery
 The method called whose return value is returned from this method and whose arguments
 should be passed will depend on self.client_type</p>
-<p>See PgCognition.DatabaseClient.runInstanceQuery and PgCognition.DatabaseClient.runServerlessQuery for arguments</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>List or Dictionary of query results</p>
+<dt class="field-odd">Keyword Arguments</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><em>pretty</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – format the results as a list of dicts, one per row, with the keys as column names, default True</p></li>
+<li><p><em>parameters</em> (<code class="docutils literal notranslate"><span class="pre">list</span></code>) – a list of parameters to pass to the query in psycopg2’s format</p></li>
+<li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">string</span></code>) – Execute as &lt;role&gt;. Only available for “instance” client_type</p></li>
+<li><p><em>commit</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – Commit directly after query. Only available for “instance” client_type</p></li>
+<li><p><em>secret</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – override config[“databaseSecretArn”] for serverless clients</p></li>
+<li><p><em>database</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – override config[“database”] for serverless clients</p></li>
+<li><p><em>databaseArn</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – override config[“databaseArn”] for serverless clients</p></li>
+<li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – schema to use for serverless clients</p></li>
+</ul>
 </dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>list or dict</p>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List or Dictionary of query results</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list or dict</p>
 </dd>
 </dl>
+<p>Boto3 does not currently respect the schema argument. Use the full path to your table in the query instead. if pretty=True then
+query results will be returned after being formatted by auroraPrettyParser.parseResults (serverless clients) or a dict
+using pyscopg2.extras.DictCursor cast to a dict (instance clients). Otherwise results will be returned using the underlying client’s
+default formatting. To use with Appsync you would pretty much always want pretty=True</p>
 <p><em>Example with a standard Postgres database</em></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
 
@@ -504,33 +461,6 @@ should be passed will depend on self.client_type</p>
 <span class="n">res</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">runQuery</span><span class="p">(</span><span class="s2">&quot;SELECT * FROM mytable&quot;</span><span class="p">,</span> <span class="n">switch_role</span><span class="o">=</span><span class="s2">&quot;less_privileged_role&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-</dd></dl>
-
-<dl class="method">
-<dt id="PgCognition.DatabaseClient.runServerlessQuery">
-<code class="sig-name descname">runServerlessQuery</code><span class="sig-paren">(</span><em class="sig-param">sql</em>, <em class="sig-param">**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.runServerlessQuery" title="Permalink to this definition">¶</a></dt>
-<dd><p>Run a query against an Aurora Serverless Postgresql database</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>sql</strong> (<em>str</em><em>, </em><em>required</em>) – SQL statement to execute</p>
-</dd>
-<dt class="field-even">Keyword Arguments</dt>
-<dd class="field-even"><ul class="simple">
-<li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – schema to use. Boto3 does not currently respect this. Use the full path to your table in the query instead</p></li>
-<li><p><em>pretty</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – format the results as a list of dicts, one per row, with the keys as column names, default True</p></li>
-<li><p><em>parameters</em> (<code class="docutils literal notranslate"><span class="pre">list</span></code>) – a list of parameters to pass to the query</p></li>
-<li><p><em>secret</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – override config[“databaseSecretArn”]</p></li>
-<li><p><em>database</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – override config[“database”]</p></li>
-<li><p><em>databaseArn</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – override config[“databaseArn”]</p></li>
-</ul>
-</dd>
-<dt class="field-odd">Returns</dt>
-<dd class="field-odd"><p>AWS Aurora rds-data response, optionally formatted with auroraPrettyParser</p>
-</dd>
-<dt class="field-even">Return type</dt>
-<dd class="field-even"><p>list or dict</p>
-</dd>
-</dl>
 </dd></dl>
 
 </dd></dl>
