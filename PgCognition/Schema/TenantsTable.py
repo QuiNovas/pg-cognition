@@ -1,11 +1,11 @@
 TENANTS_TABLE = """
-    CREATE TABLE tenants
+    CREATE TABLE cognition.tenants
     (
-        id uuid PRIMARY KEY DEFAULT shared_extensions.uuid_generate_v4() NOT NULL,
+        id uuid PRIMARY KEY DEFAULT cognition.uuid_generate_v4() NOT NULL,
         name CHARACTER VARYING UNIQUE NOT NULL,
-        displayname CHARACTER VARYING NOT NULL,
+        displayname CHARACTER VARYING NOT NULL
     );
-    ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
+    ALTER TABLE cognition.tenants ENABLE ROW LEVEL SECURITY;
     -- Special tenant for admins
-    INSERT INTO pg_cognition.tenants VALUES (DEFAULT, 'application_admins', 'Super Admin');
+    INSERT INTO cognition.tenants VALUES (DEFAULT, 'application_owner', 'Super Admin');
 """

@@ -1,5 +1,5 @@
 USERS_TABLE = """
-    CREATE TABLE users
+    CREATE TABLE cognition.users
     (
         id VARCHAR(31) PRIMARY KEY,
         email CHARACTER VARYING UNIQUE,
@@ -9,8 +9,8 @@ USERS_TABLE = """
         status VARCHAR (30) DEFAULT NULL,
         expires_at timestamp,
         invitation_data JSONB,
-        tenant_id uuid REFERENCES tenants (id) ON DELETE CASCADE,
+        tenant_id uuid REFERENCES cognition.tenants (id) ON DELETE CASCADE
     );
-    CREATE INDEX users_user_preferences_gin_idx ON users USING gin(user_preferences);
-    ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+    CREATE INDEX users_user_preferences_gin_idx ON cognition.users USING gin(user_preferences);
+    ALTER TABLE cognition.users ENABLE ROW LEVEL SECURITY;
 """

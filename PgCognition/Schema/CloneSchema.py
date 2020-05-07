@@ -1,8 +1,7 @@
 CLONE_SCHEMA = r"""
     -- Function: clone_schema(text, text, boolean, boolean)
-    ALTER FUNCTION pg_cognition.clone_schema OWNER to ROOT;
 
-    CREATE OR REPLACE FUNCTION pg_cognition.clone_schema(
+    CREATE OR REPLACE FUNCTION cognition.clone_schema(
         source_schema text,
         dest_schema text,
         include_recs boolean,
@@ -641,6 +640,6 @@ CLONE_SCHEMA = r"""
     $BODY$
       LANGUAGE plpgsql VOLATILE
       COST 100;
-    ALTER FUNCTION pg_cognition.clone_schema(text, text, boolean, boolean) OWNER TO application_admins;
+    ALTER FUNCTION cognition.clone_schema(text, text, boolean, boolean) OWNER TO application_owner;
 
 """

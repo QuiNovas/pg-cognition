@@ -106,12 +106,15 @@
 </pre></div>
 </div>
 <dl class="method">
-<dt id="PgCognition.DatabaseClient.close">
-<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close the database connection for client_type of “instance”</p>
+<dt id="PgCognition.DatabaseClient.cloneSchema">
+<code class="sig-name descname">cloneSchema</code><span class="sig-paren">(</span><em class="sig-param">src</em>, <em class="sig-param">dest</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.cloneSchema" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clones a schema with all objects and permissions</p>
 <dl class="field-list simple">
-<dt class="field-odd">Note</dt>
-<dd class="field-odd"><p>This will throw an AttributeError if client_type is not “instance”</p>
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>src</strong> (<em>str</em>) – The source schema to clone</p></li>
+<li><p><strong>dest</strong> (<em>str</em>) – The name of the destination schema</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>None</p>
@@ -120,16 +123,43 @@
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
+<p><em>Example</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">cloneSchema</span><span class="p">(</span><span class="s2">&quot;tenant_template&quot;</span><span class="p">,</span> <span class="s2">&quot;new_tenant&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
-<dt id="PgCognition.DatabaseClient.createDatabaseUser">
-<code class="sig-name descname">createDatabaseUser</code><span class="sig-paren">(</span><em class="sig-param">login=False</em>, <em class="sig-param">email=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createDatabaseUser" title="Permalink to this definition">¶</a></dt>
-<dd><p>Creates a database user, optionally from the email address found in the Lambda event</p>
+<dt id="PgCognition.DatabaseClient.close">
+<code class="sig-name descname">close</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the database connection for client_type of “instance”</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p>This will throw an AttributeError if client_type is not “instance”</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.createCognitionUser">
+<code class="sig-name descname">createCognitionUser</code><span class="sig-paren">(</span><em class="sig-param">email=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createCognitionUser" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a database user that is tied to an application user in cognition.users table. Normally run as part of Cognito’s PostSignup hook.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><em>login</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – Whether or not this will be a login user</p></li>
 <li><p><em>email</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override the email address from self.event[“user”][“email”]</p></li>
 </ul>
 </dd>
@@ -139,11 +169,48 @@
 <dt class="field-odd">Return type</dt>
 <dd class="field-odd"><p>dict</p>
 </dd>
-<dt class="field-even">Note</dt>
-<dd class="field-even"><p>If login=True then a random password will be generated and the user granted LOGIN privileges, if False then this will</p>
+</dl>
+<p>This method does not just create a database user/role. It marries a user in the cognition.users table to a new database user. If
+the email address passed to the method does not exist in the cognition.users table then an Exception will be raised. If you want to
+create arbitrary users use PgCognition.DatabaseClient.createRole method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.createRole">
+<code class="sig-name descname">createRole</code><span class="sig-paren">(</span><em class="sig-param">role</em>, <em class="sig-param">group='NULL'</em>, <em class="sig-param">password='NULL'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.createRole" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates a role, optionally with login, optionally in a group</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>role</strong> (<em>str</em>) – Name of new role</p>
+</dd>
+<dt class="field-even">Keyword Arguments</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><em>group</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Group to add role to</p></li>
+<li><p><em>password</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Give role login privilege with provided password</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
 </dd>
 </dl>
-<p>be a role that can only be used to switch to after login. EG: using switch_role option to PgCognition.DatabaseClient.runInstanceQuery()</p>
+<p>If password kwarg is provided then user will have login privileges with provided password, otherwise the role will not have login.
+If group kwarg is provided the role will be created inside of that group.</p>
+<p><em>Example adding a user role to a tenant for an instance type client</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">c</span><span class="o">.</span><span class="n">createRole</span><span class="p">(</span><span class="s2">&quot;myuser&quot;</span><span class="p">,</span> <span class="s2">&quot;my_tenant_users&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
@@ -160,10 +227,17 @@
 </dd>
 <dt class="field-even">Keyword Arguments</dt>
 <dd class="field-even"><ul class="simple">
-<li><p><em>upsert</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – If True (default) then update the secret if a secret for this email address. Other wise an Exception will be raised.</p></li>
+<li><p><em>upsert</em> (<code class="docutils literal notranslate"><span class="pre">bool</span></code>) – If True (default) then update the secret if a secret exists for this email address.</p></li>
 </ul>
 </dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>ARN of secret</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>str</p>
+</dd>
 </dl>
+<p>If upsert=False and a secret already exists for the email address an Exception will be raised.</p>
 </dd></dl>
 
 <dl class="method">
@@ -206,6 +280,104 @@
 </dd></dl>
 
 <dl class="method">
+<dt id="PgCognition.DatabaseClient.getTenantRole">
+<code class="sig-name descname">getTenantRole</code><span class="sig-paren">(</span><em class="sig-param">email</em>, <em class="sig-param">tenant</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.getTenantRole" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the role for a Cognito user by email within a specific tenant</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>email</strong> (<em>str</em>) – Email address of user</p></li>
+<li><p><strong>tenant</strong> – Name of tenant to retrieve user’s role within</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The user’s role within a tenant</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p><em>Example adding a user role to a tenant for an instance type client</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">role</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">getTenantRole</span><span class="p">(</span><span class="s2">&quot;myser@foo.com&quot;</span><span class="p">,</span> <span class="s2">&quot;my_tenant&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.getTenants">
+<code class="sig-name descname">getTenants</code><span class="sig-paren">(</span><em class="sig-param">identifier</em>, <em class="sig-param">identifier_type='email'</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.getTenants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the tenants a user belongs to. Either by email, or database role/user</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>identifier</strong> (<em>str</em>) – Email address or database role of user</p>
+</dd>
+<dt class="field-even">Keyword Arguments</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><em>identifier_type</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Cognito email address or “dbuser”</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>The user’s tenants</p>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+<p><em>Example adding a user role to a tenant for an instance type client</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">role</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">getTenantRole</span><span class="p">(</span><span class="s2">&quot;myser@foo.com&quot;</span><span class="p">,</span> <span class="s2">&quot;my_tenant&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="PgCognition.DatabaseClient.groupsOf">
+<code class="sig-name descname">groupsOf</code><span class="sig-paren">(</span><em class="sig-param">username</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.groupsOf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the database groups a database user belongs to</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>user</strong> (<em>str</em>) – Database username</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of database groups a database user belongs to</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p><em>Example</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">PgCognition</span> <span class="kn">import</span> <span class="n">DatabaseClient</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;dbname&quot;</span><span class="p">:</span> <span class="s2">&quot;mydb&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;user&quot;</span><span class="p">:</span> <span class="s2">&quot;myuser&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;host&quot;</span><span class="p">:</span> <span class="s2">&quot;localhost&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;password&quot;</span><span class="p">:</span> <span class="s2">&quot;password&quot;</span>
+<span class="p">}</span>
+<span class="n">c</span> <span class="o">=</span> <span class="n">DatabaseClient</span><span class="p">(</span><span class="n">config</span><span class="o">=</span><span class="n">config</span><span class="p">,</span> <span class="n">client_type</span><span class="o">=</span><span class="s2">&quot;instance&quot;</span><span class="p">)</span>
+<span class="n">groups</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">groupsOf</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="n">myuserid</span><span class="s2">&quot;)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
 <dt id="PgCognition.DatabaseClient.resolveAppsyncQuery">
 <code class="sig-name descname">resolveAppsyncQuery</code><span class="sig-paren">(</span><em class="sig-param">schema=''</em>, <em class="sig-param">secretArn=None</em>, <em class="sig-param">client_type=None</em>, <em class="sig-param">switch_role=None</em><span class="sig-paren">)</span><a class="headerlink" href="#PgCognition.DatabaseClient.resolveAppsyncQuery" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run a query for each item in event</p>
@@ -216,7 +388,7 @@ See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.Datab
 <dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Schema name. Boto3 rds-client doesn’t acually honor this right not. It is best to use the full path to your table in your query. Only used if client_type = “serverless”</p></li>
-<li><p><a href="#id1"><span class="problematic" id="id2">*</span></a>secretArn (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config. Only used if client_type = “serverless”</p></li>
+<li><p><em>secretArn</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config. Only used if client_type = “serverless”</p></li>
 <li><p><em>switch_role</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Excute query as specific user. The current connection must use a user with permission to assume this role. Only used if client_type = “instance”</p></li>
 </ul>
 </dd>
@@ -256,7 +428,7 @@ See PgCognition.DatabaseClient.resolveInstanceAppsyncQuery and PgCognition.Datab
 <dt class="field-odd">Keyword Arguments</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><em>schema</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Schema name. Boto3 rds-client doesn’t acually honor this right not. It is best to use the full path to your table in your query.</p></li>
-<li><p><a href="#id3"><span class="problematic" id="id4">*</span></a>secretArn (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config</p></li>
+<li><p><em>secretArn</em> (<code class="docutils literal notranslate"><span class="pre">str</span></code>) – Override databaseSecretArn from config</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

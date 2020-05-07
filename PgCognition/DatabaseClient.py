@@ -59,8 +59,7 @@ class DatabaseClient():
             "region": "us-east-1",
             "secretsPath": "rds-db-credentials"
         }
-        dbClient = DatabaseClient(event=event, config=config)
-        return dbClient.resolveAppsyncQuery()
+        c = DatabaseClient(event=event, config=config)
         res = c.runQuery("SELECT * FROM mytable", switch_role="less_privileged_role")
     """
 
@@ -91,10 +90,11 @@ class DatabaseClient():
     def close(self):
         """Close the database connection for client_type of "instance"
 
-        :Note: This will throw an AttributeError if client_type is not "instance"
-
         :returns: None
         :rtype: None
+
+        This will throw an AttributeError if client_type is not "instance"
+
         """
 
         if self.client_type == "instance":
@@ -160,8 +160,11 @@ class DatabaseClient():
             parameters
         )
         if commit: self.client.commit()
-        if pretty: r = [dict(x) for x in c.fetchall()]
-        else: r = [list(x) for x in c.fetchall()]
+        try:
+            if pretty: r = [dict(x) for x in c.fetchall()]
+            else: r = [list(x) for x in c.fetchall()]
+        except Exception:
+            r = []
         return r
 
     def runServerlessQuery(self, sql, **kwargs):
@@ -214,7 +217,7 @@ class DatabaseClient():
 
         :Keyword Arguments:
             * *schema* (``str``) -- Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query. Only used if client_type = "serverless"
-            * *secretArn (``str``) -- Override databaseSecretArn from config. Only used if client_type = "serverless"
+            * *secretArn* (``str``) -- Override databaseSecretArn from config. Only used if client_type = "serverless"
             * *switch_role* (``str``) -- Excute query as specific user. The current connection must use a user with permission to assume this role. Only used if client_type = "instance"
 
         :returns: Query results from PgCognition.DatabaseClient.resolveInstanceAppsyncQuery or PgCognition.DatabaseClient.resolveServerlessAppsyncQuery
@@ -262,7 +265,7 @@ class DatabaseClient():
 
         :Keyword Arguments:
             * *schema* (``str``) -- Schema name. Boto3 rds-client doesn't acually honor this right not. It is best to use the full path to your table in your query.
-            * *secretArn (``str``) -- Override databaseSecretArn from config
+            * *secretArn* (``str``) -- Override databaseSecretArn from config
 
         :returns: list of dicts or list of list of dicts with column names as keys
         :rtype: list
@@ -336,22 +339,21 @@ class DatabaseClient():
             raise Exception("Could not determine secret ARN through cognito claims or IAM overrides")
         return secret
 
-    def createDatabaseUser(self, login=False, email=None):
-        """Creates a database user, optionally from the email address found in the Lambda event
+    def createCognitionUser(self, email=None):
+        """Creates a database user that is tied to an application user in cognition.users table. Normally run as part of Cognito's PostSignup hook.
 
         :Keyword Arguments:
-            * *login* (``bool``) -- Whether or not this will be a login user
             * *email* (``str``) -- Override the email address from self.event["user"]["email"]
 
         :returns: Dictionary containing new user's database credentials and corresponding user from cognition.users table
         :rtype: dict
 
-
-        :Note: If login=True then a random password will be generated and the user granted LOGIN privileges, if False then this will
-        be a role that can only be used to switch to after login. EG: using switch_role option to PgCognition.DatabaseClient.runInstanceQuery()
+        This method does not just create a database user/role. It marries a user in the cognition.users table to a new database user. If
+        the email address passed to the method does not exist in the cognition.users table then an Exception will be raised. If you want to
+        create arbitrary users use PgCognition.DatabaseClient.createRole method.
         """
 
-        dbpass = ''.join(random.choice('!@#$%^&*()_-+=1234567890' + letters) for i in range(31))
+        dbpass = ''.join(random.choice('!@#$%^&*()_-+=1234567890' + letters) for i in range(31)) if self.client_type == "serverless" else "NULL"
         email = email if email is not None else self.event["user"]["email"]
         try:
             if self.client_type == "serverless":
@@ -361,29 +363,13 @@ class DatabaseClient():
                 ]
 
                 sql = """
-                    UPDATE pg_cognition.users
+                    UPDATE cognition.users
                     SET
                         status='active',
                         invitation_data=jsonb_set(invitation_data, '{accepted_date}', (:CURRENT_TIME)::JSONB)
                     WHERE email = :EMAIL
                     RETURNING *;
                 """
-                newuser = self.runQuery(sql, parameters=parameters)
-
-                if not newuser:
-                    raise Exception(f"""Application user {email} does not exist.""")
-
-                newuser = newuser[0]
-                loginSql = f"""
-                    CREATE USER {newuser["id"]} WITH PASSWORD '{dbpass}' IN ROLE {newuser["invitation_data"]["role"]};
-                """
-
-                nologinSql = f"""
-                    CREATE ROLE {newuser["id"]} IN ROLE {newuser["invitation_data"]["role"]};
-                """
-                sql = loginSql if login else nologinSql
-                self.runQuery(sql)
-                newuser["secret"] = self.createSecret(newuser["id"], email, dbpass) if login else None
             else:
                 parameters = {
                     "CURRENT_TIME": datetime.now().isoformat(),
@@ -396,22 +382,18 @@ class DatabaseClient():
                         invitation_data=jsonb_set(invitation_data, '{{accepted_date}}', (%(CURRENT_TIME)s)::JSONB)
                     WHERE email = %(EMAIL)s RETURNING *;
                 """
-                newuser = self.runQuery(sql, parameters=parameters)
 
-                if not newuser:
-                    raise Exception(f"""Application user {email} does not exist.""")
+            newuser = self.runQuery(sql, parameters=parameters)
 
-                newuser = newuser[0]
-                loginSql = f"""
-                    CREATE USER {newuser["id"]} WITH PASSWORD '{dbpass}' IN ROLE {newuser["invitation_data"]["role"]};
-                """
+            if not newuser:
+                raise Exception(f"""Application user {email} does not exist.""")
 
-                nologinSql = f"""
-                    CREATE ROLE {newuser["id"]} IN ROLE {newuser["invitation_data"]["role"]};
-                """
-                sql = loginSql if login else nologinSql
-                self.runQuery(sql)
-                newuser["password"] = dbpass if login else None
+            newuser = newuser[0]
+            self.createRole(newuser["id"], newuser["invitation_data"]["role"], password=dbpass)
+            if self.client_type == "serverless":
+                newuser["secret"] = self.createSecret(newuser["userid"], newuser["email"], dbpass, upsert=True)
+            else:
+                newuser["password"] = dbpass
 
             return newuser
         except (Exception, ClientError) as e:
@@ -419,12 +401,12 @@ class DatabaseClient():
                 sql = f"""
                     UPDATE pg_cognition.users SET status = 'invited' WHERE id = {newuser["id"]};
                     REVOKE {newuser["invitation_data"]["role"]} FROM {newuser["id"]};
-                    DROP ROLE {newuser["id"]}
+                    DROP ROLE {newuser["id"]};
                 """
                 self.runQuery(sql)
             except Exception:
                 pass
-            if self.client_type == "serverless" and login:
+            if self.client_type == "serverless":
                 try:
                     self.deleteSecret(newuser["email"], wait=False)
                 except Exception:
@@ -459,8 +441,12 @@ class DatabaseClient():
         :type dbpass: str
 
         :Keyword Arguments:
-            * *upsert* (``bool``) -- If True (default) then update the secret if a secret for this email address. Other wise an Exception will be raised.
+            * *upsert* (``bool``) -- If True (default) then update the secret if a secret exists for this email address.
 
+        :returns: ARN of secret
+        :rtype: str
+
+        If upsert=False and a secret already exists for the email address an Exception will be raised.
         """
         s = boto3.client('secretsmanager')
         secretString = {
@@ -488,3 +474,153 @@ class DatabaseClient():
             )["ARN"]
 
         return arn
+
+    def cloneSchema(self, src, dest):
+        """Clones a schema with all objects and permissions
+
+        :param src: The source schema to clone
+        :type src: str
+        :param dest: The name of the destination schema
+        :type dest: str
+        :returns: None
+        :rtype: None
+
+        *Example*
+
+        ..  code-block:: python
+
+            from PgCognition import DatabaseClient
+
+            config = {
+                "dbname": "mydb",
+                "user": "myuser",
+                "host": "localhost",
+                "password": "password"
+            }
+            c = DatabaseClient(config=config, client_type="instance")
+            c.cloneSchema("tenant_template", "new_tenant")
+        """
+        self.client.runQuery(f"""SELECT cognition.clone_schema('{src}', '{dest}', True, False)""", pretty=False, commit=True)
+
+    def createRole(self, role, group='NULL', password="NULL"):
+        """Creates a role, optionally with login, optionally in a group
+
+        :param role: Name of new role
+        :type role: str
+
+        :Keyword Arguments:
+            * *group* (``str``) -- Group to add role to
+            * *password* (``str``) -- Give role login privilege with provided password
+
+        :returns: None
+        :rtype: None
+
+        If password kwarg is provided then user will have login privileges with provided password, otherwise the role will not have login.
+        If group kwarg is provided the role will be created inside of that group.
+
+        *Example adding a user role to a tenant for an instance type client*
+
+        ..  code-block:: python
+
+            from PgCognition import DatabaseClient
+
+            config = {
+                "dbname": "mydb",
+                "user": "myuser",
+                "host": "localhost",
+                "password": "password"
+            }
+            c = DatabaseClient(config=config, client_type="instance")
+            c.createRole("myuser", "my_tenant_users")
+        """
+        sql = f"""SELECT cognition.createrole({role}, {group}, '{password}')"""
+        self.client.runQuery(sql, pretty=False, commit=True)
+
+    def getTenantRole(self, email, tenant):
+        """Get the role for a Cognito user by email within a specific tenant
+
+        :param email: Email address of user
+        :type email: str
+        :param tenant: Name of tenant to retrieve user's role within
+        :type role: str
+
+        :returns: The user's role within a tenant
+        :rtype: str
+
+
+        *Example adding a user role to a tenant for an instance type client*
+
+        ..  code-block:: python
+
+            from PgCognition import DatabaseClient
+
+            config = {
+                "dbname": "mydb",
+                "user": "myuser",
+                "host": "localhost",
+                "password": "password"
+            }
+            c = DatabaseClient(config=config, client_type="instance")
+            role = c.getTenantRole("myser@foo.com", "my_tenant")
+        """
+
+        result = self.runQuery(f"""SELECT * FROM cognition.tenantrole('{email}', '{tenant}')""", pretty=True)
+        return result[0]["tenantrole"]
+
+    def getTenants(self, identifier, identifier_type='email'):
+        """Get the tenants a user belongs to. Either by email, or database role/user
+
+        :param identifier: Email address or database role of user
+        :type identifier: str
+
+        :Keyword Arguments:
+            * *identifier_type* (``str``) -- Cognito email address or "dbuser"
+
+        :returns: The user's tenants
+        :rtype: list
+
+        *Example adding a user role to a tenant for an instance type client*
+
+        ..  code-block:: python
+
+            from PgCognition import DatabaseClient
+
+            config = {
+                "dbname": "mydb",
+                "user": "myuser",
+                "host": "localhost",
+                "password": "password"
+            }
+            c = DatabaseClient(config=config, client_type="instance")
+            role = c.getTenantRole("myser@foo.com", "my_tenant")
+        """
+
+        result = self.runQuery(f"""SELECT * FROM cognition.gettenants('{identifier}', '{identifier_type}')""", pretty=True)
+        return [x["gettenants"] for x in result]
+
+    def groupsOf(self, username):
+        """Get the database groups a database user belongs to
+
+        :param user: Database username
+        :type user: str
+        :returns: A list of database groups a database user belongs to
+        :rtype: list
+
+        *Example*
+
+        ..  code-block:: python
+
+            from PgCognition import DatabaseClient
+
+            config = {
+                "dbname": "mydb",
+                "user": "myuser",
+                "host": "localhost",
+                "password": "password"
+            }
+            c = DatabaseClient(config=config, client_type="instance")
+            groups = c.groupsOf(""myuserid")
+        """
+
+        result = self.runQuery(f"""SELECT * FROM cognition.groupsof('{username}')""", pretty=True)
+        return [x["groupsof"] for x in result]

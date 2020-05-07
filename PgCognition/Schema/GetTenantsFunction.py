@@ -1,17 +1,28 @@
 GET_TENANTS = """
-    CREATE OR REPLACE FUNCTION pg_cognition.gettenants(username text)
-            RETURNS setof text AS $$
-                DECLARE rolename pg_roles.rolname%TYPE;
-                BEGIN
-                    FOR rolename IN
-                        SELECT rolname FROM pg_user
-                            JOIN pg_auth_members ON (pg_user.usesysid=pg_auth_members.member)
-                            JOIN pg_roles ON (pg_roles.oid=pg_auth_members.roleid)
-                        WHERE
-                        pg_user.usename=username LOOP
-                        RETURN NEXT (SELECT regexp_replace(rolename, '(_admin(s)?|_user(s)?)$', '' )) AS rolename;
-                    END LOOP;
-                    RETURN;
-            END;
-        $$ LANGUAGE PLPGSQL VOLATILE;
+   CREATE OR REPLACE FUNCTION cognition.gettenants(identifier text, usertype text default 'email')
+    RETURNS setof text AS $$
+    DECLARE
+        rolename pg_roles.rolname%TYPE;
+        username text;
+        alltenants cognition.tenants.name%TYPE;
+    BEGIN
+        IF usertype = 'email' THEN
+            username := (SELECT id FROM cognition.users WHERE email = identifier);
+        ELSEIF usertype = 'dbuser' THEN
+            username := identifier;
+        ELSE
+            RAISE EXCEPTION 'usertype must be one of dbuser or email';
+        END IF;
+
+        FOR rolename IN
+            SELECT  a.rolname FROM  pg_authid a
+            WHERE  pg_has_role(username, a.oid, 'member')
+                AND  a.rolname != username
+                AND REGEXP_REPLACE(a.rolname, '(_admin(s)?|_user(s)?)$', '' ) IN (SELECT name from cognition.tenants)
+            LOOP
+            RETURN NEXT (SELECT regexp_replace(rolename, '(_admin(s)?|_user(s)?)$', '' )) AS rolename;
+        END LOOP;
+        RETURN;
+    END;
+    $$ LANGUAGE PLPGSQL VOLATILE;
 """

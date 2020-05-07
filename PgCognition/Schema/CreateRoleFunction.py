@@ -1,5 +1,5 @@
 CREATE_ROLE = """
-    CREATE OR REPLACE FUNCTION pg_cognition.createrole(_groupname NAME, _ingroup NAME DEFAULT NULL, _pass TEXT DEFAULT NULL)
+    CREATE OR REPLACE FUNCTION cognition.createrole(_groupname NAME, _ingroup NAME DEFAULT NULL, _pass TEXT DEFAULT NULL)
         RETURNS void AS  $$
             BEGIN
                IF NOT EXISTS (

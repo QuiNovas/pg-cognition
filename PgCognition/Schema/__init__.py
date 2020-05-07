@@ -4,6 +4,7 @@ from .TenantsTable import TENANTS_TABLE
 from .CreateRoleFunction import CREATE_ROLE
 from .GroupsOfFunction import GROUPS_OF
 from .GetTenantsFunction import GET_TENANTS
+from .TenantRoleFunction import TENANT_ROLE
 from .RLS import *
 from .Grants import GRANTS
 from .Builder import Builder
