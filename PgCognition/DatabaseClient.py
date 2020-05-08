@@ -287,7 +287,7 @@ class DatabaseClient():
 
         else:
             result = self._runInstanceQuery(
-                self.event[n]["query"],
+                self.event["query"],
                 parameters=self.event["parameters"],
                 switch_role=switch_role
             )
