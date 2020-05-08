@@ -173,11 +173,15 @@ class DatabaseClient():
         parameters = {} if "parameters" not in kwargs else kwargs["parameters"]
         cursor_type = DictCursor if pretty else None
         c = self.client.cursor(cursor_factory=cursor_type)
-        c.execute(
-            sql,
-            parameters
-        )
-        if commit: self.client.commit()
+        try:
+            c.execute(
+                sql,
+                parameters
+            )
+            if commit: self.client.commit()
+        except Exception as e:
+            if commit: self.client.commit()
+            raise e
         try:
             if pretty: r = [dict(x) for x in c.fetchall()]
             else: r = [list(x) for x in c.fetchall()]
