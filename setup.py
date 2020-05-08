@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pg-cognition',
-    version='0.0.4',
+    version='0.0.5',
     description='Building blocks for a Postgres + Appsync + Cognito framework',
     author='Mathew Moon',
     author_email='mmoon@quinovas.com',
@@ -15,6 +15,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         "aurora-prettyparser",
+        "psycopg2-binary",
         "boto3",
         "botocore"
     ],
