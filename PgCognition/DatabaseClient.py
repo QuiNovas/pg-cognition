@@ -77,15 +77,19 @@ class DatabaseClient():
             required = ("dbname", "host", "user", "password", "port")
             defaults = {"port": 5432}
             self.config = validateConfig(required, config, defaults=defaults)
-            self.client = psycopg2.connect(
-                dbname=self.config["dbname"],
-                user=self.config["user"],
-                host=self.config["host"],
-                password=self.config["password"],
-                port=self.config["port"]
-            )
+            self.client = None
+            self.connect()
             self.client_type = "instance"
             self.commit = self.client.commit
+
+    def connect(self):
+        self.client = psycopg2.connect(
+            dbname=self.config["dbname"],
+            user=self.config["user"],
+            host=self.config["host"],
+            password=self.config["password"],
+            port=self.config["port"]
+        )
 
     def close(self):
         """Close the database connection for client_type of "instance"
