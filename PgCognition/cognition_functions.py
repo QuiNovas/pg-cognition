@@ -1,6 +1,7 @@
 from json import loads
 from json.decoder import JSONDecodeError
 from os import environ
+from re import match
 import boto3
 from botocore.exceptions import ClientError
 
@@ -49,3 +50,22 @@ def getCallerAccount():
 
 def getCallerFromSecret(secret):
     return secret.split("/")[-1]
+
+def getAppsyncCaller(event):
+    if isinstance(event, list):
+        identity = event[0]["identity"]
+    else:
+        identity = event["identity"]
+
+    user = None
+    if "userArn" not in identity:
+        user = identity["claims"]["email"]
+    else:
+        # Test for an assumed role
+        stsRole = match(f'^arn:aws:sts::[0-9]+:assumed-role/(.*)/[0-9]+$', identity["userArn"])
+        if stsRole:
+            user = stsRole.group(1)
+        else:
+            user = identity["userArn"].split("/")[-1]
+    if user is None: raise Exception("Could not identify caller")
+    return user
