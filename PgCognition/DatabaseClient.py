@@ -160,7 +160,7 @@ class DatabaseClient():
             * *switch_role* (``string``) -- Run "SET ROLE <switch_role>" before executing the query to escalate/deescalate privileges
             * *commit* (``bool``) -- Commit directly after query
         """
-        commit = False if "commit" not in kwargs else kwargs["commit"]
+        commit = True if "commit" not in kwargs else kwargs["commit"]
         assert commit in (True, False), "commit kwarg must be a boolean"
 
         if "switch_role" in kwargs and kwargs["switch_role"] is not None:
@@ -281,7 +281,8 @@ class DatabaseClient():
                 result = self._runInstanceQuery(
                     self.event[n]["query"],
                     parameters=self.event[n]["parameters"],
-                    switch_role=switch_role
+                    switch_role=switch_role,
+                    commit=True
                 )
                 res.append(result)
 
@@ -289,7 +290,8 @@ class DatabaseClient():
             result = self._runInstanceQuery(
                 self.event["query"],
                 parameters=self.event["parameters"],
-                switch_role=switch_role
+                switch_role=switch_role,
+                commit=True
             )
         return result
 
