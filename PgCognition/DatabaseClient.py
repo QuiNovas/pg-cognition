@@ -163,12 +163,19 @@ class DatabaseClient():
             * *parameters* (``list``) -- a list of parameters to pass to the query in psycopg2's format
             * *switch_role* (``string``) -- Run "SET ROLE <switch_role>" before executing the query to escalate/deescalate privileges
             * *commit* (``bool``) -- Commit directly after query
+            * *reset_auth* (``bool``) -- Reset auth after query
         """
         commit = True if "commit" not in kwargs else kwargs["commit"]
         assert commit in (True, False), "commit kwarg must be a boolean"
 
+        reset_auth = True if "reset_auth" not in kwargs else kwargs["reset_auth"]
+        assert reset_auth in (True, False), "reset_auth kwarg must be a boolean"
+
         if "switch_role" in kwargs and kwargs["switch_role"] is not None:
+            switch_role = True
             sql = f"""SET ROLE {kwargs["switch_role"]}; {sql}"""
+        else:
+            switch_role = False
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = {} if "parameters" not in kwargs else kwargs["parameters"]
         cursor_type = DictCursor if pretty else None
@@ -179,9 +186,10 @@ class DatabaseClient():
                 parameters
             )
             if commit: self.client.commit()
-        except Exception as e:
+            if reset_auth and switch_role: c.execute("RESET SESSION AUTHORIZATION;")
+        finally:
             if commit: self.client.commit()
-            raise e
+            if reset_auth and switch_role: c.execute("RESET SESSION AUTHORIZATION;")
         try:
             if pretty: r = [dict(x) for x in c.fetchall()]
             else: r = [list(x) for x in c.fetchall()]
@@ -290,7 +298,8 @@ class DatabaseClient():
                     self.event[n]["query"],
                     parameters=self.event[n]["parameters"],
                     switch_role=switch_role,
-                    commit=True
+                    commit=True,
+                    reset_auth=True
                 )
                 res.append(result)
 
@@ -299,7 +308,8 @@ class DatabaseClient():
                 self.event["query"],
                 parameters=self.event["parameters"],
                 switch_role=switch_role,
-                commit=True
+                commit=True,
+                reset_auth=True
             )
         return result
 

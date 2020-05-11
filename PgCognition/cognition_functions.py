@@ -59,7 +59,7 @@ def getAppsyncCaller(event):
 
     user = None
     if "userArn" not in identity:
-        user = identity["claims"]["email"]
+        user = identity["claims"]["userid"]
     else:
         # Test for an assumed role
         stsRole = match(f'^arn:aws:sts::[0-9]+:assumed-role/(.*)/[0-9]+$', identity["userArn"])
