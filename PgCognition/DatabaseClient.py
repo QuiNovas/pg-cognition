@@ -185,16 +185,12 @@ class DatabaseClient():
                 sql,
                 parameters
             )
-            if commit: self.client.commit()
-            if reset_auth and switch_role: c.execute("RESET SESSION AUTHORIZATION;")
+
+            if pretty: r = [dict(x) for x in c.fetchall()]
+            else: r = [list(x) for x in c.fetchall()]
         finally:
             if commit: self.client.commit()
             if reset_auth and switch_role: c.execute("RESET SESSION AUTHORIZATION;")
-        try:
-            if pretty: r = [dict(x) for x in c.fetchall()]
-            else: r = [list(x) for x in c.fetchall()]
-        except Exception:
-            r = []
         return r
 
     def _runServerlessQuery(self, sql, **kwargs):
