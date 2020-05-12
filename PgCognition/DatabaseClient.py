@@ -173,7 +173,7 @@ class DatabaseClient():
 
         if "switch_role" in kwargs and kwargs["switch_role"] is not None:
             switch_role = True
-            sql = f"""SET ROLE {kwargs["switch_role"]}; {sql}"""
+            sql = f"""SET ROLE "{kwargs["switch_role"]}"; {sql}"""
         else:
             switch_role = False
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
