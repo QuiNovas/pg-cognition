@@ -1,7 +1,7 @@
 TENANTS_TABLE = """
     CREATE TABLE cognition.tenants
     (
-        id uuid PRIMARY KEY DEFAULT cognition.uuid_generate_v4() NOT NULL,
+        id uuid PRIMARY KEY DEFAULT public.uuid_generate_v4() NOT NULL,
         name CHARACTER VARYING UNIQUE NOT NULL,
         displayname CHARACTER VARYING NOT NULL
     );

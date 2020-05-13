@@ -21,7 +21,7 @@ class Builder():
     def createCognitionSchema(self):
         queries = [
             "CREATE SCHEMA cognition;",
-            f"""CREATE EXTENSION "uuid-ossp" WITH SCHEMA cognition;""",
+            f"""CREATE EXTENSION "uuid-ossp" WITH SCHEMA public;""",
             CREATE_ROLE,
             TENANTS_TABLE,
             USERS_TABLE,
