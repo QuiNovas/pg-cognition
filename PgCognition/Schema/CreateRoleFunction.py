@@ -1,4 +1,4 @@
-CREATE_ROLE = """
+CREATE_ROLE = r"""
     CREATE OR REPLACE FUNCTION cognition.createrole(_groupname NAME, _ingroup NAME DEFAULT NULL, _pass TEXT DEFAULT NULL)
         RETURNS void AS  $$
             BEGIN

@@ -234,7 +234,7 @@ class DatabaseClient():
         if pretty: res = parseResults(res)
         return res
 
-    def resolveAppsyncQuery(self, schema="", secretArn=None, client_type=None, switch_role=None):
+    def resolveAppsyncQuery(self, schema="", secretArn=None, client_type=None, switch_role=None, event=None):
         """Run a query for each item in event
 
         This is a wrapper for DatabaseClient.resolveInstanceAppsyncQuery and DatabaseClient.resolveServerlessAppsyncQuery and
@@ -277,7 +277,7 @@ class DatabaseClient():
             res = self._resolveInstanceAppsyncQuery(switch_role=switch_role)
         return res
 
-    def _resolveInstanceAppsyncQuery(self, switch_role=None):
+    def _resolveInstanceAppsyncQuery(self, switch_role=None, event=None):
         """Run a query for each item in the event.
 
         :Keyword Arguments:
@@ -287,6 +287,7 @@ class DatabaseClient():
         :rtype: list
         """
 
+        self.event = event
         if isinstance(self.event, list):
             res = []
             for n in range(len(self.event)):
