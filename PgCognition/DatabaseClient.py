@@ -290,15 +290,15 @@ class DatabaseClient():
         if isinstance(self.event, list):
             result = []
             for n in range(len(self.event)):
-                result = self._runInstanceQuery(
-                    self.event[n]["query"],
-                    parameters=self.event[n]["parameters"],
-                    switch_role=switch_role,
-                    commit=True,
-                    reset_auth=True
+                result.append(
+                    self._runInstanceQuery(
+                        self.event[n]["query"],
+                        parameters=self.event[n]["parameters"],
+                        switch_role=switch_role,
+                        commit=True,
+                        reset_auth=True
+                    )
                 )
-                result.append(result)
-
         else:
             result = self._runInstanceQuery(
                 self.event["query"],

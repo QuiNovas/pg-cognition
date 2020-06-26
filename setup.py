@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='pg-cognition',
-    version='0.0.16',
+    version='0.0.17',
     description='Building blocks for a Postgres + Appsync + Cognito framework',
     author='Mathew Moon',
     author_email='mmoon@quinovas.com',
