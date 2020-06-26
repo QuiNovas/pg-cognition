@@ -268,7 +268,7 @@ class DatabaseClient():
                 dbClient = DatabaseClient(event=event, config=config, client_type="serverless")
                 return dbClient.resolveAppsyncQuery()
         """
-
+        if event is not None: self.event = event
         if client_type is None:
             client_type = self.client_type
         if client_type == "serverless":
@@ -277,7 +277,7 @@ class DatabaseClient():
             res = self._resolveInstanceAppsyncQuery(switch_role=switch_role)
         return res
 
-    def _resolveInstanceAppsyncQuery(self, switch_role=None, event=None):
+    def _resolveInstanceAppsyncQuery(self, switch_role=None):
         """Run a query for each item in the event.
 
         :Keyword Arguments:
@@ -287,7 +287,6 @@ class DatabaseClient():
         :rtype: list
         """
 
-        self.event = event
         if isinstance(self.event, list):
             res = []
             for n in range(len(self.event)):
