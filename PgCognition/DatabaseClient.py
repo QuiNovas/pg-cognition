@@ -288,7 +288,7 @@ class DatabaseClient():
         """
 
         if isinstance(self.event, list):
-            res = []
+            result = []
             for n in range(len(self.event)):
                 result = self._runInstanceQuery(
                     self.event[n]["query"],
@@ -297,7 +297,7 @@ class DatabaseClient():
                     commit=True,
                     reset_auth=True
                 )
-                res.append(result)
+                result.append(result)
 
         else:
             result = self._runInstanceQuery(
