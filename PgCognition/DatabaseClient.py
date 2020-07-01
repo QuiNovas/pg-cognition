@@ -114,6 +114,7 @@ class DatabaseClient():
 
         :Keyword Arguments:
             * *pretty* (``bool``) -- format the results as a list of dicts, one per row, with the keys as column names, default True
+            * *fetch_results* (``bool``) -- If False don't return any results. Default is True
             * *parameters* (``list``) -- a list of parameters to pass to the query in psycopg2's format
             * *switch_role* (``string``) -- Execute as <role>. Only available for "instance" client_type
             * *commit* (``bool``) -- Commit directly after query. Only available for "instance" client_type
@@ -160,6 +161,7 @@ class DatabaseClient():
 
         :Keyword Arguments:
             * *pretty* (``bool``) -- format the results as a list of dicts, one per row, with the keys as column names, default True
+            * *fetch_results* (``bool``) -- If False don't return any results. Default is True
             * *parameters* (``list``) -- a list of parameters to pass to the query in psycopg2's format
             * *switch_role* (``string``) -- Run "SET ROLE <switch_role>" before executing the query to escalate/deescalate privileges
             * *commit* (``bool``) -- Commit directly after query
@@ -179,15 +181,18 @@ class DatabaseClient():
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = {} if "parameters" not in kwargs else kwargs["parameters"]
         cursor_type = DictCursor if pretty else None
+        fetch_results = kwargs.get("fetch_results") or True
         c = self.client.cursor(cursor_factory=cursor_type)
         try:
             c.execute(
                 sql,
                 parameters
             )
-
-            if pretty: r = [dict(x) for x in c.fetchall()]
-            else: r = [list(x) for x in c.fetchall()]
+            if fetch_results:
+                if pretty: r = [dict(x) for x in c.fetchall()]
+                else: r = [list(x) for x in c.fetchall()]
+            else:
+                r = None
         finally:
             if commit: self.client.commit()
             if reset_auth and switch_role: c.execute("RESET SESSION AUTHORIZATION;")
