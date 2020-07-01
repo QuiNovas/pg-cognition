@@ -181,7 +181,7 @@ class DatabaseClient():
         pretty = True if "pretty" not in kwargs else kwargs["pretty"]
         parameters = {} if "parameters" not in kwargs else kwargs["parameters"]
         cursor_type = DictCursor if pretty else None
-        fetch_results = kwargs.get("fetch_results") or True
+        fetch_results = True if "fetch_results" not in kwargs else kwargs["fetch_results"]
         c = self.client.cursor(cursor_factory=cursor_type)
         try:
             c.execute(
